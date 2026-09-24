@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clientes — Estampy interno</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/img/estampy-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="adm-page" class="hidden">
+  <div class="kpis" id="resumen" style="margin-bottom:20px"></div>
+
+  <div class="adm-tools">
+    <div class="adm-search">
+      <span id="icBuscar"></span>
+      <input id="buscar" type="search" placeholder="Buscar por nombre, cédula, correo o teléfono…">
+    </div>
+    <select class="sort-select" id="orden">
+      <option value="gastado">Mayor gasto</option>
+      <option value="pedidos">Más pedidos</option>
+      <option value="reciente">Compra más reciente</option>
+      <option value="nombre">Nombre A–Z</option>
+    </select>
+  </div>
+
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Clientes</h2><p id="contador"></p></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnCSV"></button>
+    </div>
+    <div class="box-body tight"><div class="tabla-wrap" id="tabla"></div></div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/mockup.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="admin.js"></script>
+<script>
+(async function () {
+  const A = window.STAMPY;
+  if (!(await ADM.iniciar("clientes", "Clientes", "Quién compra, cuánto y con qué frecuencia"))) return;
+
+  const $ = (id) => document.getElementById(id);
+  $("icBuscar").innerHTML = A.icon("search");
+  $("btnCSV").innerHTML = A.icon("download") + " Exportar CSV";
+
+  let texto = "", orden = "gastado";
+  $("buscar").addEventListener("input", (e) => { texto = e.target.value.toLowerCase(); pintar(); });
+  $("orden").addEventListener("change", (e) => { orden = e.target.value; pintar(); });
+
+  function lista() {
+    let l = ADM.clientes();
+    if (texto) {
+      l = l.filter((c) => (c.nombre + " " + c.cedula + " " + c.email + " " + c.telefono).toLowerCase().includes(texto));
+    }
+    const ord = {
+      gastado: (a, b) => b.gastado - a.gastado,
+      pedidos: (a, b) => b.pedidos - a.pedidos,
+      reciente: (a, b) => new Date(b.ultimo) - new Date(a.ultimo),
+      nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es"),
+    }[orden];
+    return l.sort(ord);
+  }
+
+  function pintarResumen() {
+    const cs = ADM.clientes();
+    const recurrentes = cs.filter((c) => c.pedidos > 1);
+    const total = A.round2(cs.reduce((s, c) => s + c.gastado, 0));
+    const empresas = cs.filter((c) => String(c.cedula).toUpperCase().startsWith("J"));
+
+    const items = [
+      ["users", "", "Clientes registrados", cs.length, "Con al menos un pedido"],
+      ["dollar", "green", "Facturado histórico", A.fmtUSD(total), `Ticket medio ${A.fmtUSD(cs.length ? total / cs.reduce((s, c) => s + c.pedidos, 0) || 0 : 0)}`],
+      ["refresh", "", "Clientes recurrentes", recurrentes.length, cs.length ? `${Math.round((recurrentes.length / cs.length) * 100)} % del total` : "—"],
+      ["tag", "", "Cuentas empresa", empresas.length, "Compras con RIF jurídico"],
+    ];
+    $("resumen").innerHTML = items
+      .map(([ic, col, dt, dd, sub]) => `<div class="kpi">
+        <div class="kpi-ic ${col}">${A.icon(ic)}</div><dt>${dt}</dt><dd>${dd}</dd><span class="sub">${sub}</span></div>`)
+      .join("");
+  }
+
+  function pintar() {
+    const l = lista();
+    $("contador").textContent = `${l.length} ${l.length === 1 ? "cliente" : "clientes"} en pantalla`;
+
+    $("tabla").innerHTML = l.length
+      ? `<table class="tabla">
+        <thead><tr><th>Cliente</th><th>Contacto</th><th class="num">Pedidos</th><th class="num">Gastado</th>
+        <th>Primera compra</th><th>Última compra</th><th class="acciones">Acciones</th></tr></thead>
+        <tbody>${l.map((c) => `<tr>
+          <td>
+            <div class="row" style="gap:10px">
+              <span class="avatar">${A.escape(c.nombre.split(" ").map((x) => x[0]).slice(0, 2).join(""))}</span>
+              <span>
+                <span class="principal">${A.escape(c.nombre)}</span>
+                <div class="sec">${A.escape(c.cedula)}${String(c.cedula).toUpperCase().startsWith("J") ? ' · <span class="badge badge-gray">Empresa</span>' : ""}</div>
+              </span>
+            </div>
+          </td>
+          <td class="small">${A.escape(c.telefono)}<div class="sec">${A.escape(c.email)}</div></td>
+          <td class="num">${c.pedidos}${c.cancelados ? `<div class="sec">${c.cancelados} cancelado(s)</div>` : ""}</td>
+          <td class="num"><strong>${A.fmtUSD(c.gastado)}</strong><div class="sec">${A.fmtBsRaw(c.gastado * A.config.bcvRate)}</div></td>
+          <td class="small muted">${A.fmtFecha(c.primero)}</td>
+          <td class="small muted">${ADM.hace(c.ultimo)}</td>
+          <td class="acciones">
+            <button class="tbtn" type="button" onclick="verCliente('${c.clave.replace(/'/g, "")}')" title="Ver ficha">${A.icon("eye")}</button>
+            <a class="tbtn" href="https://wa.me/58${(c.telefono || "").replace(/[^0-9]/g, "").slice(1)}" target="_blank" rel="noopener" title="WhatsApp">${A.icon("whatsapp")}</a>
+            <a class="tbtn" href="mailto:${A.escape(c.email)}" title="Correo">${A.icon("mail")}</a>
+          </td>
+        </tr>`).join("")}</tbody></table>`
+      : ADM.vacio("users", "Sin clientes", "Todavía nadie ha comprado en la tienda.");
+  }
+
+  window.verCliente = function (clave) {
+    const c = ADM.clientes().find((x) => x.clave === clave);
+    if (!c) return;
+    const pedidos = A.orders.all().filter((o) => (o.cliente.email || o.cliente.cedula).toLowerCase() === clave);
+    const modelos = {};
+    pedidos.filter((o) => !o.cancelado).forEach((o) => o.items.forEach((i) => (modelos[i.nombre] = (modelos[i.nombre] || 0) + i.qty)));
+
+    ADM.detalle(
+      `<div class="row" style="gap:12px">
+        <span class="avatar" style="width:46px;height:46px;font-size:1rem">${A.escape(c.nombre.split(" ").map((x) => x[0]).slice(0, 2).join(""))}</span>
+        <div><strong style="font-size:1.08rem;color:var(--brand-deep);display:block">${A.escape(c.nombre)}</strong>
+        <span class="small muted">${A.escape(c.cedula)}</span></div>
+      </div>`,
+      `<div class="det-sec">
+        <h4>Contacto</h4>
+        <dl class="dl">
+          <div class="dl-row"><dt>Teléfono</dt><dd>${A.escape(c.telefono)}</dd></div>
+          <div class="dl-row"><dt>Correo</dt><dd>${A.escape(c.email)}</dd></div>
+          <div class="dl-row"><dt>Cliente desde</dt><dd>${A.fmtFecha(c.primero)}</dd></div>
+          <div class="dl-row"><dt>Última compra</dt><dd>${A.fmtFecha(c.ultimo)} (${ADM.hace(c.ultimo)})</dd></div>
+        </dl>
+      </div>
+
+      <div class="det-sec">
+        <h4>Resumen</h4>
+        <div class="kpis" style="grid-template-columns:1fr 1fr;gap:12px">
+          <div class="kpi" style="padding:14px"><dt>Pedidos</dt><dd style="font-size:1.4rem">${c.pedidos}</dd></div>
+          <div class="kpi" style="padding:14px"><dt>Gastado</dt><dd style="font-size:1.4rem">${A.fmtUSD(c.gastado)}</dd></div>
+        </div>
+      </div>
+
+      ${Object.keys(modelos).length ? `<div class="det-sec">
+        <h4>Productos comprados</h4>
+        <div class="stack-8">${Object.entries(modelos).map(([n, q]) => `
+          <div class="row-between"><span class="small">${A.escape(n)}</span><strong class="small" style="color:var(--brand-deep)">${q} u</strong></div>`).join("")}
+        </div>
+      </div>` : ""}
+
+      <div class="det-sec">
+        <h4>Historial de pedidos</h4>
+        ${pedidos.map((o) => `<div class="order-mini">
+          <div class="grow">
+            <a class="mono" style="font-size:.8rem;font-weight:800;color:var(--brand-deep)" href="pedidos.html?codigo=${o.codigo}">${o.codigo}</a>
+            <div class="tiny muted">${A.fmtFecha(o.creado)} · ${o.entrega.modo === "tienda" ? "Retiro" : "Delivery"} · ${ADM.metodoLabel(o.pago.metodo)}</div>
+            <div class="tiny" style="color:var(--gray-700);margin-top:3px">${A.escape(ADM.resumenPedido(o))}</div>
+            ${ADM.agruparLineas(o.items).filter((g) => ADM.tieneDiseno(g.diseno)).map((g) => ADM.disenoHTML(g.diseno, true, { producto: A.getProduct(g.id), tam: 44 })).join("")}
+          </div>
+          <div style="text-align:right">
+            <strong style="font-size:.88rem;color:var(--brand-deep);display:block">${A.fmtUSD(o.totales.total)}</strong>
+            ${ADM.estadoBadge(o)}
+          </div>
+        </div>`).join("")}
+      </div>`,
+      `<a class="btn btn-ghost btn-sm" href="https://wa.me/58${(c.telefono || "").replace(/[^0-9]/g, "").slice(1)}" target="_blank" rel="noopener">${A.icon("whatsapp")} WhatsApp</a>
+       <a class="btn btn-ghost btn-sm" href="mailto:${A.escape(c.email)}">${A.icon("mail")} Escribir correo</a>`
+    );
+  };
+
+  $("btnCSV").onclick = () =>
+    ADM.exportarCSV(
+      "clientes-estampy",
+      ["Nombre", "Cedula/RIF", "Telefono", "Correo", "Pedidos", "Cancelados", "Gastado USD", "Gastado Bs", "Primera compra", "Ultima compra", "Productos (talla y color)"],
+      lista().map((c) => {
+        const suyos = A.orders.activos().filter((o) => (o.cliente.email || o.cliente.cedula).toLowerCase() === c.clave);
+        return [
+          c.nombre, c.cedula, c.telefono, c.email, c.pedidos, c.cancelados,
+          c.gastado.toFixed(2), (c.gastado * A.config.bcvRate).toFixed(2),
+          A.fmtFecha(c.primero), A.fmtFecha(c.ultimo),
+          suyos.map(ADM.resumenPedido).join(" || "),
+        ];
+      })
+    );
+
+  pintarResumen();
+  pintar();
+})();
+</script>
+</body>
+</html>

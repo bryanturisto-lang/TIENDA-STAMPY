@@ -1,0 +1,78 @@
+# =========================================================
+# Stampy — configuración de Netlify
+# =========================================================
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  # No hay paso de compilación: el sitio es HTML, CSS y JS listos para servir.
+  command = "echo 'Sitio estático: nada que compilar'"
+
+[functions]
+  node_bundler = "esbuild"
+
+# La API vive en /api/* — la atiende netlify/functions/api.mjs,
+# que se registra solo en esa ruta (ver `export const config` al final del archivo).
+
+# URLs limpias: /producto en vez de /producto.html
+[[redirects]]
+  from = "/panel"
+  to = "/admin/index.html"
+  status = 301
+
+[[redirects]]
+  from = "/seguimiento"
+  to = "/seguimiento.html"
+  status = 301
+
+[[redirects]]
+  from = "/checkout"
+  to = "/checkout.html"
+  status = 301
+
+# Cualquier ruta desconocida muestra la página 404 del sitio
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+# ---------------- Cabeceras ----------------
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# El panel interno no se indexa ni se cachea
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/css/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/js/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[dev]
+  publish = "public"
+  port = 8888

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagos — Estampy interno</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/img/estampy-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="adm-page" class="hidden">
+  <div class="kpis" id="resumen" style="margin-bottom:20px"></div>
+
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Cola de verificación</h2><p>Pagos reportados por clientes, esperando que los confirmes contra el banco</p></div>
+      <div class="row" style="gap:8px">
+        <button class="btn btn-ghost btn-sm" type="button" id="btnCSV"></button>
+        <button class="btn btn-soft btn-sm" type="button" id="btnVerificarTodo"></button>
+      </div>
+    </div>
+    <div class="box-body" id="cola"></div>
+  </div>
+
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Por cobrar en el taller</h2><p>Pedidos que se pagan al momento de retirar</p></div>
+    </div>
+    <div class="box-body tight"><div class="tabla-wrap" id="porCobrar"></div></div>
+  </div>
+
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Historial de pagos verificados</h2><p>Últimos 25 movimientos conciliados</p></div>
+      <div class="adm-search" style="max-width:260px">
+        <span id="icBuscar"></span>
+        <input id="buscar" type="search" placeholder="Buscar referencia o cliente…">
+      </div>
+    </div>
+    <div class="box-body tight"><div class="tabla-wrap" id="historial"></div></div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/mockup.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="admin.js"></script>
+<script>
+(async function () {
+  const A = window.STAMPY;
+  if (!(await ADM.iniciar("pagos", "Verificación de pagos", "Concilia los reportes de pago móvil, transferencia y Zelle"))) return;
+
+  const $ = (id) => document.getElementById(id);
+  $("icBuscar").innerHTML = A.icon("search");
+  $("btnCSV").innerHTML = A.icon("download") + " Exportar";
+  $("btnVerificarTodo").innerHTML = A.icon("checkCircle") + " Verificar todos";
+
+  ADM.acciones(`<span class="badge badge-gray">Tasa: 1 USD = ${A.config.bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2 })} Bs</span>`);
+
+  let filtroTexto = "";
+  $("buscar").addEventListener("input", (e) => { filtroTexto = e.target.value.toLowerCase(); pintarHistorial(); });
+
+  /* ==================== Resumen ==================== */
+  function pintarResumen() {
+    const pend = A.orders.activos().filter((o) => o.pagoEstado === "reportado");
+    const rech = A.orders.activos().filter((o) => o.pagoEstado === "rechazado");
+    const cobrar = A.orders.activos().filter((o) => o.pagoEstado === "por-cobrar");
+    const verif = A.orders.activos().filter((o) => o.pagoEstado === "verificado");
+    const montoPend = A.round2(pend.reduce((t, o) => t + o.totales.total, 0));
+
+    const items = [
+      ["clock", pend.length ? "amber" : "green", "Esperando verificación", pend.length, `${A.fmtUSD(montoPend)} · ${A.fmtBsRaw(montoPend * A.config.bcvRate)}`, pend.length ? "alerta" : ""],
+      ["xCircle", rech.length ? "red" : "", "Rechazados", rech.length, rech.length ? "Requieren contacto con el cliente" : "Ninguno", rech.length ? "critico" : ""],
+      ["store", "", "Por cobrar en el taller", cobrar.length, `${A.fmtUSD(cobrar.reduce((t, o) => t + o.totales.total, 0))} al retirar`, ""],
+      ["checkCircle", "green", "Verificados", verif.length, `${A.fmtUSD(verif.reduce((t, o) => t + o.totales.total, 0))} conciliados`, ""],
+    ];
+    $("resumen").innerHTML = items
+      .map(([ic, col, dt, dd, sub, cls]) => `<div class="kpi ${cls}">
+        <div class="kpi-ic ${col}">${A.icon(ic)}</div>
+        <dt>${dt}</dt><dd>${dd}</dd><span class="sub">${sub}</span></div>`)
+      .join("");
+  }
+
+  /* ==================== Cola de verificación ==================== */
+  function pintarCola() {
+    const lista = A.orders.activos()
+      .filter((o) => o.pagoEstado === "reportado" || o.pagoEstado === "rechazado")
+      .sort((a, b) => new Date(a.creado) - new Date(b.creado));
+
+    $("btnVerificarTodo").style.display = lista.filter((o) => o.pagoEstado === "reportado").length > 1 ? "" : "none";
+
+    if (!lista.length) {
+      $("cola").innerHTML = `<div class="notice notice-green">${A.icon("checkCircle")}<span><strong>Todo conciliado.</strong> No hay pagos esperando verificación.</span></div>`;
+      return;
+    }
+
+    $("cola").innerHTML = lista.map(tarjetaPago).join("");
+  }
+
+  /* Cuenta a la que debió llegar el pago; si sigue con el marcador "[…]" se avisa */
+  function cuentaDestino(o) {
+    const C = A.config;
+    const v = {
+      transferencia: (C.transferencia || {}).banco,
+      zelle: (C.zelle || {}).email,
+      binance: (C.binance || {}).id,
+      paypal: (C.paypal || {}).email,
+      "banesco-panama": (C.banescoPanama || {}).cuenta,
+    }[o.pago.metodo] || (C.pagoMovil || {}).banco || "—";
+    return A.escape(v) + (ADM.esMarcador(v) ? ' <span class="pendiente-tag">por configurar</span>' : "");
+  }
+
+  function tarjetaPago(o) {
+    const rechazado = o.pagoEstado === "rechazado";
+    const datos = [
+      ["Método", ADM.metodoLabel(o.pago.metodo)],
+      ["Banco emisor", A.escape(o.pago.banco || "—")],
+      ["Referencia", `<span class="mono" style="font-size:1rem;letter-spacing:.06em">${A.escape(o.pago.referencia || "—")}</span>`],
+      ["Teléfono emisor", A.escape(o.pago.telefono || "—")],
+      ["Usuario / Correo", A.escape(o.pago.usuario || o.pago.email || "—")],
+      ["Cédula / Titular", A.escape(o.pago.cedula || o.pago.titular || "—")],
+      ["Fecha del pago", A.escape(o.pago.fecha || A.fmtFecha(o.creado))],
+      ["Comprobante", o.pago.comprobante ? A.escape(o.pago.comprobante) : "No adjuntó"],
+    ];
+
+    return `
+    <div class="box" style="margin-bottom:16px;border-color:${rechazado ? "var(--red-600)" : "var(--amber-600)"}">
+      <div class="box-head" style="background:${rechazado ? "var(--red-100)" : "var(--amber-100)"};border-bottom-color:${rechazado ? "var(--red-600)" : "var(--amber-600)"}">
+        <div>
+          <div class="row" style="gap:10px;flex-wrap:wrap">
+            <span class="mono" style="font-weight:800;color:var(--brand-deep)">${o.codigo}</span>
+            ${ADM.pagoBadge(o)}
+            <span class="tiny muted">Reportado ${ADM.hace(o.creado)}</span>
+          </div>
+          <p style="margin-top:4px">${A.escape(o.cliente.nombre)} · ${A.escape(o.cliente.telefono)}</p>
+        </div>
+        <div style="text-align:right">
+          <strong style="font-size:1.25rem;color:var(--brand-deep);display:block">${A.fmtBsRaw(o.totales.totalBs)}</strong>
+          <span class="tiny muted">equivale a ${A.fmtUSD(o.totales.total)}</span>
+        </div>
+      </div>
+
+      <div class="box-body">
+        ${rechazado ? `<div class="notice notice-red" style="margin-bottom:16px">${A.icon("alert")}<span>Rechazado antes: ${A.escape(o.pagoMotivo || "")}</span></div>` : ""}
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px">
+          <div>
+            <h4 style="font-size:.69rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:10px">Lo que reportó el cliente</h4>
+            <dl class="dl">
+              ${datos.map(([k, v]) => `<div class="dl-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("")}
+            </dl>
+          </div>
+          <div>
+            <h4 style="font-size:.69rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:10px">Contra qué comparar</h4>
+            <div class="bank-box" style="padding:14px">
+              <div class="bank-row"><dt>Cuenta destino</dt><dd>${cuentaDestino(o)}</dd></div>
+              <div class="bank-row"><dt>Monto esperado</dt><dd>${A.fmtBsRaw(o.totales.totalBs)}</dd></div>
+              <div class="bank-row"><dt>Pedido</dt><dd>${ADM.piezas(o)} pieza(s)</dd></div>
+              <div class="bank-row"><dt>Entrega</dt><dd>${o.entrega.modo === "tienda" ? "Retiro en taller" : A.escape(o.entrega.ciudad || "Delivery")}</dd></div>
+            </div>
+            <div style="margin-top:6px">${ADM.lineasHTML(o.items, { disenoCompacto: true })}</div>
+          </div>
+        </div>
+
+        <div class="row" style="gap:9px;margin-top:20px;flex-wrap:wrap">
+          <button class="btn btn-primary" type="button" onclick="verificar('${o.codigo}')">${A.icon("checkCircle")} Verificar y liberar</button>
+          <button class="btn btn-ghost" type="button" onclick="rechazar('${o.codigo}')" style="color:var(--red-600);border-color:var(--red-100)">${A.icon("xCircle")} Rechazar</button>
+          <a class="btn btn-ghost btn-sm" href="pedidos.html?codigo=${o.codigo}">Ver pedido completo</a>
+          <button class="btn btn-ghost btn-sm" type="button" onclick="avisarPagoVerificado('${o.codigo}')" style="color:var(--green-700)">${A.icon("whatsapp")} Avisar pago verificado</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* Respaldo manual: por si el aviso automático de Evolution API no llega,
+     esto abre WhatsApp con el mensaje ya escrito para mandarlo a mano. */
+  window.avisarPagoVerificado = function (codigo) {
+    const o = A.orders.find(codigo);
+    if (!o || !o.cliente || !o.cliente.telefono) return;
+    const msj = `✅ *Pago verificado*\n\n🎉 ¡Hola, ${o.cliente.nombre}!\n¡Buenas noticias! Hemos verificado correctamente el pago de tu pedido *${o.codigo}*.\n\nEl siguiente paso es la prueba de diseño: te la enviamos por aquí para que la apruebes antes de producir. Te mantendremos informado en cada etapa hasta la entrega.\n\nGracias por confiar en Estampy.`;
+    A.abrirWhatsApp(o.cliente.telefono, msj);
+  };
+
+  window.verificar = function (codigo) {
+    const o = A.orders.find(codigo);
+    ADM.confirmar(
+      "Verificar pago de " + codigo,
+      `Confirmas que el pago de <strong>${A.fmtBsRaw(o.totales.totalBs)}</strong> con referencia <strong>${A.escape(o.pago.referencia || "—")}</strong> aparece en la cuenta. El pedido pasa a la revisión de diseño y el cliente lo verá en su seguimiento.`,
+      () => { A.orders.verificarPago(codigo); recargar("Pago verificado. Toca enviar la prueba de diseño."); },
+      "Sí, verificar"
+    );
+  };
+
+  window.rechazar = function (codigo) {
+    ADM.modal({
+      titulo: "Rechazar pago de " + codigo,
+      ancho: "angosto",
+      cuerpo: `<p class="small" style="color:var(--ink-soft);margin-bottom:14px">El pedido vuelve al estado inicial y el cliente verá el aviso en su seguimiento.</p>
+        <div class="field">
+          <label for="motivoRech">Motivo del rechazo</label>
+          <select class="select" id="motivoRech">
+            <option>La referencia no aparece en el estado de cuenta</option>
+            <option>El monto recibido no coincide con el del pedido</option>
+            <option>El pago corresponde a otro pedido</option>
+            <option>La fecha del reporte no cuadra con el movimiento</option>
+            <option>El comprobante está ilegible o incompleto</option>
+          </select>
+        </div>`,
+      pie: `<button class="btn btn-ghost" type="button" onclick="ADM.cerrarModal()">Volver</button>
+            <button class="btn btn-primary" style="background:var(--red-600)" type="button" id="okRech">Rechazar pago</button>`,
+      alAbrir: (bg) => {
+        bg.querySelector("#okRech").onclick = () => {
+          A.orders.rechazarPago(codigo, bg.querySelector("#motivoRech").value);
+          ADM.cerrarModal();
+          recargar("Pago rechazado. Avísale al cliente.");
+        };
+      },
+    });
+  };
+
+  $("btnVerificarTodo").onclick = () => {
+    const pend = A.orders.activos().filter((o) => o.pagoEstado === "reportado");
+    ADM.confirmar(
+      "Verificar " + pend.length + " pagos",
+      `Se marcarán como verificados los ${pend.length} pagos en cola, por un total de <strong>${A.fmtUSD(pend.reduce((t, o) => t + o.totales.total, 0))}</strong>. Úsalo solo si ya los revisaste todos en el banco.`,
+      () => { pend.forEach((o) => A.orders.verificarPago(o.codigo)); recargar(pend.length + " pagos verificados"); },
+      "Verificar todos"
+    );
+  };
+
+  /* ==================== Por cobrar en el taller ==================== */
+  function pintarPorCobrar() {
+    const lista = A.orders.activos().filter((o) => o.pagoEstado === "por-cobrar");
+    $("porCobrar").innerHTML = lista.length
+      ? `<table class="tabla">
+          <thead><tr><th>Pedido</th><th>Cliente</th><th>Punto de retiro</th><th class="num">A cobrar</th><th class="acciones">Acción</th></tr></thead>
+          <tbody>${lista.map((o) => `<tr>
+            <td><span class="principal mono" style="font-size:.8rem">${o.codigo}</span><div class="sec">${ADM.hace(o.creado)}</div></td>
+            <td>${A.escape(o.cliente.nombre)}<div class="sec">${A.escape(o.cliente.telefono)}</div></td>
+            <td class="small">${A.escape(o.entrega.tiendaNombre || "—")}</td>
+            <td class="num"><strong>${A.fmtUSD(o.totales.total)}</strong><div class="sec">${A.fmtBsRaw(o.totales.totalBs)}</div></td>
+            <td class="acciones"><button class="btn btn-soft btn-sm" type="button" onclick="cobrado('${o.codigo}')">Marcar cobrado</button></td>
+          </tr>`).join("")}</tbody>
+        </table>`
+      : ADM.vacio("store", "Nada por cobrar", "No hay pedidos pendientes de pago en el taller.");
+  }
+
+  window.cobrado = function (codigo) {
+    ADM.confirmar("Registrar cobro", "Confirmas que recibiste el pago en efectivo en el taller.", () => {
+      A.orders.verificarPago(codigo);
+      recargar("Cobro registrado");
+    }, "Sí, cobrado");
+  };
+
+  /* ==================== Historial ==================== */
+  function pintarHistorial() {
+    let lista = A.orders.all().filter((o) => o.pagoEstado === "verificado");
+    if (filtroTexto) {
+      lista = lista.filter((o) =>
+        (o.codigo + " " + o.cliente.nombre + " " + (o.pago.referencia || "") + " " + (o.pago.banco || ""))
+          .toLowerCase().includes(filtroTexto)
+      );
+    }
+    lista = lista.sort((a, b) => new Date(b.pagoVerificado || b.creado) - new Date(a.pagoVerificado || a.creado)).slice(0, 25);
+
+    $("historial").innerHTML = lista.length
+      ? `<table class="tabla">
+          <thead><tr><th>Pedido</th><th>Cliente</th><th>Método</th><th>Referencia</th><th class="num">Monto</th><th>Verificado</th></tr></thead>
+          <tbody>${lista.map((o) => `<tr>
+            <td><a class="principal mono" style="font-size:.8rem" href="pedidos.html?codigo=${o.codigo}">${o.codigo}</a></td>
+            <td>${A.escape(o.cliente.nombre)}</td>
+            <td class="small">${ADM.metodoLabel(o.pago.metodo)}<div class="sec">${A.escape(o.pago.banco || "")}</div></td>
+            <td class="mono small">${A.escape(o.pago.referencia || "—")}</td>
+            <td class="num"><strong>${A.fmtUSD(o.totales.total)}</strong><div class="sec">${A.fmtBsRaw(o.totales.totalBs)}</div></td>
+            <td class="small muted">${o.pagoVerificado ? ADM.hace(o.pagoVerificado) : A.fmtFecha(o.creado)}</td>
+          </tr>`).join("")}</tbody>
+        </table>`
+      : ADM.vacio("receipt", "Sin pagos verificados", "Cuando confirmes un pago aparecerá en este historial.");
+  }
+
+  /* ==================== Exportar ==================== */
+  $("btnCSV").onclick = () => {
+    const lista = A.orders.all().filter((o) => o.pago.metodo !== "efectivo");
+    ADM.exportarCSV(
+      "conciliacion-pagos",
+      ["Pedido", "Fecha", "Cliente", "Metodo", "Banco", "Referencia", "Monto USD", "Monto Bs", "Estado"],
+      lista.map((o) => [
+        o.codigo, A.fmtFecha(o.creado), o.cliente.nombre, ADM.metodoLabel(o.pago.metodo),
+        o.pago.banco || "", o.pago.referencia || "",
+        o.totales.total.toFixed(2), o.totales.totalBs.toFixed(2), o.pagoEstado,
+      ])
+    );
+  };
+
+  function recargar(mensaje) {
+    pintarResumen(); pintarCola(); pintarPorCobrar(); pintarHistorial();
+    if (mensaje) A.toast(mensaje, "checkCircle");
+  }
+
+  recargar();
+})();
+</script>
+</body>
+</html>

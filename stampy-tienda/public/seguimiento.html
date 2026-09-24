@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seguimiento de pedido — Estampy</title>
+<meta name="description" content="Consulta el estado de tu pedido Estampy: pago, aprobación del diseño, producción, despacho y entrega.">
+<link rel="icon" href="assets/img/estampy-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<div id="app-header"></div>
+
+<main id="contenido">
+<!-- ============ BUSCADOR ============ -->
+<section class="track-hero">
+  <span class="spark deco-spark deco-spark--a" aria-hidden="true"></span>
+  <span class="spark deco-spark deco-spark--b" aria-hidden="true"></span>
+  <div class="wrap center">
+    <span class="eyebrow">Seguimiento</span>
+    <h1 style="font-size:clamp(2rem,4vw,3rem);margin-top:12px">¿Cómo va mi pedido?</h1>
+    <p class="lead" style="max-width:54ch;margin:12px auto 0">Escribe el número de pedido que te dimos al finalizar la compra. Tiene el formato <span class="mono" style="color:var(--orange-ink);font-weight:700">EST-2026-XXXXXX</span>.</p>
+
+    <form class="track-form" id="formBuscar" novalidate>
+      <input class="input mono" id="inputCodigo" placeholder="EST-2026-4821KM" aria-label="Número de pedido" autocomplete="off">
+      <button class="btn btn-dark btn-lg" type="submit" id="btnBuscar">Buscar</button>
+    </form>
+    <div id="errorBusqueda" class="hidden" style="max-width:560px;margin:16px auto 0"></div>
+
+    <div id="misPedidos" class="hidden" style="margin-top:26px">
+      <p class="small muted" style="margin-bottom:10px">Pedidos guardados en este navegador:</p>
+      <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap" id="chipsPedidos"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTADO ============ -->
+<section class="section" id="resultado">
+  <div class="wrap">
+    <div class="track-panel" id="panelPedido"></div>
+
+    <!-- Estado inicial: sin búsqueda -->
+    <div id="estadoInicial">
+      <div class="grid-3" id="ayudaGrid"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="app-footer"></div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/mockup.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+  const A = window.STAMPY;
+  const CFG = A.config;
+  A.basePath = "";
+  await A.init("seguimiento");
+
+  const $ = (s) => document.querySelector(s);
+
+  /* ---------- Bloques de ayuda (estado inicial) ---------- */
+  $("#ayudaGrid").innerHTML = [
+    ["receipt", "¿Dónde está mi número?", "Aparece en la pantalla de confirmación al terminar la compra y en el correo que te enviamos. Empieza por EST."],
+    ["headset", "¿Perdiste el número?", `Escríbenos ${A.waURL() ? "por WhatsApp" : "al " + CFG.contact.phone} con tu cédula y te lo buscamos en el momento.`],
+    ["print", "¿Cuánto tarda?", "Los días de producción de cada producto, contados desde que apruebas la prueba de diseño, más el envío a tu zona. Si retiras en el taller, te avisamos apenas esté listo."],
+  ]
+    .map(
+      ([ic, t, d]) => `
+    <div class="help-card">
+      <div class="help-ic">${A.icon(ic)}</div>
+      <h3>${t}</h3>
+      <p class="small muted" style="margin-top:6px">${d}</p>
+    </div>`
+    )
+    .join("");
+
+  /* ---------- Pedidos guardados ---------- */
+  function pintarChips() {
+    // Con servidor: los pedidos hechos desde este navegador.
+    // Sin servidor: todos los que hay guardados localmente.
+    const codigos = A.modoServidor
+      ? A.misPedidos()
+      : A.orders.all().slice(0, 6).map((o) => o.codigo);
+
+    const lista = codigos.length ? codigos : ["EST-2026-4821KM", "EST-2026-7390PT"];
+    $("#misPedidos").classList.remove("hidden");
+    $("#misPedidos").querySelector("p").textContent = codigos.length
+      ? "Tus pedidos recientes:"
+      : "Pedidos de ejemplo para probar el seguimiento:";
+    $("#chipsPedidos").innerHTML = lista
+      .slice(0, 6)
+      .map((c) => `<button class="chip mono" type="button" data-codigo="${c}">${c}</button>`)
+      .join("");
+  }
+  pintarChips();
+
+  $("#chipsPedidos").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip");
+    if (!b) return;
+    $("#inputCodigo").value = b.dataset.codigo;
+    buscar(b.dataset.codigo);
+  });
+
+  /* ---------- Búsqueda ---------- */
+  $("#formBuscar").addEventListener("submit", (e) => {
+    e.preventDefault();
+    buscar($("#inputCodigo").value);
+  });
+
+  async function buscar(codigo) {
+    const err = $("#errorBusqueda");
+    const c = String(codigo || "").trim();
+
+    if (!c) {
+      err.className = "notice notice-amber";
+      err.innerHTML = A.icon("alert") + "<span>Escribe tu número de pedido para poder buscarlo.</span>";
+      return;
+    }
+
+    const boton = $("#btnBuscar");
+    boton.disabled = true;
+    boton.textContent = "Buscando…";
+    const o = await A.orders.buscar(c);
+    boton.disabled = false;
+    boton.textContent = "Buscar";
+
+    if (!o) {
+      err.className = "notice notice-red";
+      err.innerHTML =
+        A.icon("alert") +
+        `<span>No encontramos el pedido <strong class="mono">${A.escape(c.toUpperCase())}</strong>. Revisa que esté completo o escríbenos al ${CFG.contact.phone}.</span>`;
+      $("#panelPedido").classList.remove("is-shown");
+      $("#estadoInicial").classList.remove("hidden");
+      return;
+    }
+
+    err.className = "hidden";
+    $("#estadoInicial").classList.add("hidden");
+    pintarPedido(o);
+    history.replaceState(null, "", "?codigo=" + o.codigo);
+  }
+
+  /* ---------- Render del pedido ---------- */
+  function pintarPedido(o) {
+    const pasos = A.orders.pasosDe(o);
+    const idx = o.estadoIndex;
+    const actual = pasos[idx];
+    const esTienda = o.entrega.modo === "tienda";
+    const entregado = idx >= pasos.length - 1;
+    const progreso = Math.round((idx / (pasos.length - 1)) * 100);
+
+    const fechaDe = (pasoId) => {
+      const h = o.historial.find((x) => x.paso === pasoId);
+      return h ? A.fmtFechaHora(h.fecha) : null;
+    };
+
+    const metodoLabel = {
+      "pago-movil": "Pago móvil",
+      transferencia: "Transferencia bancaria",
+      zelle: "Zelle",
+      binance: "Binance (USDT)",
+      paypal: "PayPal",
+      "banesco-panama": "Banesco Panamá",
+      efectivo: "Efectivo al retirar",
+    }[o.pago.metodo] || o.pago.metodo;
+
+    // 0 recibido · 1 pago · 2 diseño aprobado · 3 en producción · 4 despachado/listo · 5 entregado
+    const badge = o.cancelado
+      ? '<span class="badge badge-red">Cancelado</span>'
+      : entregado
+      ? `<span class="badge badge-green">${esTienda ? "Retirado" : "Entregado"}</span>`
+      : idx >= 4
+      ? `<span class="badge badge-solid">${esTienda ? "Listo para retirar" : "Despachado"}</span>`
+      : idx === 3
+      ? '<span class="badge badge-cyan">En producción</span>'
+      : idx === 2
+      ? '<span class="badge badge-yellow">Diseño aprobado</span>'
+      : '<span class="badge badge-amber">' + A.escape(actual.titulo) + "</span>";
+
+    $("#panelPedido").innerHTML = `
+      <div class="panel">
+        <!-- Cabecera -->
+        <div class="track-header">
+          <div>
+            <span class="eyebrow">Pedido</span>
+            <h2 class="mono" style="font-size:1.5rem;margin-top:4px">${o.codigo}</h2>
+            <div class="row wrap-row" style="margin-top:10px">
+              ${badge}
+              <span class="small muted">Realizado el ${A.fmtFecha(o.creado)}</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <span class="tiny muted" style="display:block">${entregado ? "Entregado el" : esTienda ? "Listo aproximadamente" : "Entrega estimada"}</span>
+            <strong style="font-size:1.15rem;color:var(--brand-deep)">${A.fmtFecha(entregado ? (o.historial[o.historial.length - 1] || {}).fecha || o.eta : o.eta)}</strong>
+            <div class="tiny muted" style="margin-top:2px">${esTienda ? "Retiro en el taller" : (o.courier || "Delivery")}${o.guia ? " · " + o.guia : ""}</div>
+          </div>
+        </div>
+
+        <!-- Estado actual -->
+        ${o.cancelado
+          ? `<div class="notice notice-red" style="margin-top:22px">${A.icon("alert")}
+              <span><strong>Pedido cancelado.</strong> ${A.escape(o.motivoCancelacion || "")} Si crees que es un error, escríbenos al ${CFG.contact.phone}.</span></div>`
+          : o.pagoEstado === "rechazado"
+          ? `<div class="notice notice-red" style="margin-top:22px">${A.icon("alert")}
+              <span><strong>No pudimos verificar tu pago.</strong> ${A.escape(o.pagoMotivo || "")}. Escríbenos al ${CFG.contact.phone} con la captura del comprobante y lo revisamos.</span></div>`
+          : `<div class="notice ${entregado ? "notice-green" : "notice-blue"}" style="margin-top:22px">
+              ${A.icon(actual.icono)}
+              <span><strong>${actual.titulo}.</strong> ${actual.texto}</span></div>`}
+
+        <!-- Barra de progreso -->
+        ${!esTienda ? `
+        <div class="map-box" style="margin-top:22px">
+          <div class="row-between">
+            <div>
+              <span class="map-label">Avance del pedido</span>
+              <div class="small" style="margin-top:2px">${progreso}% completado</div>
+            </div>
+            <span class="badge">${A.escape(o.courier || "Delivery")}</span>
+          </div>
+          <div class="map-track">
+            <div class="map-progress" style="width:${progreso}%"></div>
+            <div class="map-truck" style="left:${Math.max(4, Math.min(96, progreso))}%">${A.icon(entregado ? "check" : "truck", "", 17)}</div>
+          </div>
+          <div class="map-ends">
+            <span>${A.escape(((CFG.tiendas || [])[0] || {}).nombre || "Taller Estampy")}</span>
+            <span>${A.escape(o.entrega.ciudad || "Destino")}</span>
+          </div>
+        </div>` : ""}
+
+        <!-- Línea de tiempo -->
+        <div style="margin-top:30px">
+          <h3 style="font-size:1.05rem;margin-bottom:22px">Historial del pedido</h3>
+          <div class="timeline">
+            <div class="timeline-fill" style="height:${(idx / (pasos.length - 1)) * 100}%"></div>
+            ${pasos
+              .map((p, i) => {
+                const cls = i < idx ? "is-done" : i === idx ? "is-current" : "";
+                const f = fechaDe(p.id);
+                return `
+                <div class="tl-item ${cls}">
+                  <span class="tl-dot">${A.icon(i < idx ? "check" : p.icono, "", 15)}</span>
+                  <h4>${p.titulo}</h4>
+                  <p>${p.texto}</p>
+                  ${f ? `<span class="tl-time">${f}</span>` : `<span class="tl-time">Pendiente</span>`}
+                </div>`;
+              })
+              .join("")}
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos de la entrega -->
+      <div class="panel">
+        <div class="panel-head"><h2 style="font-size:1.15rem">Datos de la entrega</h2></div>
+        <div class="info-grid">
+          <div class="info-cell"><dt>Destinatario</dt><dd>${A.escape(o.cliente.nombre)}<br><span class="small muted">${A.escape(o.cliente.cedula)}</span></dd></div>
+          <div class="info-cell"><dt>Teléfono</dt><dd>${A.escape(o.cliente.telefono)}</dd></div>
+          <div class="info-cell"><dt>Correo</dt><dd style="font-size:.85rem">${A.escape(o.cliente.email)}</dd></div>
+          ${esTienda
+            ? `<div class="info-cell"><dt>Retiro en</dt><dd>${A.escape(o.entrega.tiendaNombre)}<br><span class="small muted">${A.escape(o.entrega.direccion)}</span></dd></div>
+               ${o.entrega.horario ? `<div class="info-cell"><dt>Horario</dt><dd style="font-size:.85rem">${A.escape(o.entrega.horario)}</dd></div>` : ""}
+               ${o.entrega.retiraOtro ? `<div class="info-cell"><dt>Retira</dt><dd style="font-size:.85rem">${A.escape(o.entrega.retiraOtro)}</dd></div>` : ""}`
+            : `<div class="info-cell"><dt>Dirección</dt><dd style="font-size:.85rem;font-weight:500">${A.escape(o.entrega.direccion)}</dd></div>
+               <div class="info-cell"><dt>Ciudad y zona</dt><dd style="font-size:.85rem">${A.escape(o.entrega.ciudad || "")} · ${A.escape((o.entrega.zonaNombre || "").split("(")[0].trim())}</dd></div>
+               ${o.entrega.referencia ? `<div class="info-cell"><dt>Referencia</dt><dd style="font-size:.85rem;font-weight:500">${A.escape(o.entrega.referencia)}</dd></div>` : ""}
+               ${o.entrega.nota ? `<div class="info-cell"><dt>Nota</dt><dd style="font-size:.85rem;font-weight:500">${A.escape(o.entrega.nota)}</dd></div>` : ""}`}
+        </div>
+
+        ${!esTienda && o.repartidor && idx >= 4 && !entregado
+          ? `<div class="notice notice-blue" style="margin-top:18px">
+              ${A.icon("user")}
+              <span>Tu repartidor es <strong>${A.escape(o.repartidor.nombre)}</strong> (${A.escape(o.repartidor.vehiculo)}). Puedes contactarlo al <strong>${A.escape(o.repartidor.telefono)}</strong> si necesitas coordinar la entrega.</span>
+            </div>`
+          : ""}
+
+        ${esTienda && idx >= 4 && !entregado
+          ? `<div class="notice notice-green" style="margin-top:18px">
+              ${A.icon("store")}
+              <span>Tu pedido está listo en <strong>${A.escape(o.entrega.tiendaNombre)}</strong>. Lleva tu cédula y este número de pedido.</span>
+            </div>`
+          : ""}
+      </div>
+
+      <!-- Pago y productos -->
+      <div class="panel">
+        <div class="panel-head"><h2 style="font-size:1.15rem">Pago y productos</h2></div>
+
+        <div class="info-grid" style="margin-bottom:22px">
+          <div class="info-cell"><dt>Método</dt><dd>${metodoLabel}</dd></div>
+          ${o.pago.banco ? `<div class="info-cell"><dt>Banco</dt><dd style="font-size:.85rem">${A.escape(o.pago.banco)}</dd></div>` : ""}
+          ${o.pago.referencia ? `<div class="info-cell"><dt>Referencia</dt><dd class="mono">${A.escape(o.pago.referencia)}</dd></div>` : ""}
+          <div class="info-cell"><dt>Estado del pago</dt><dd>${
+            {
+              verificado: '<span class="badge badge-green">Verificado</span>',
+              reportado: '<span class="badge badge-amber">En verificación</span>',
+              rechazado: '<span class="badge badge-red">Rechazado</span>',
+              "por-cobrar": '<span class="badge badge-amber">Por pagar al retirar</span>',
+            }[o.pagoEstado] || (idx >= 1 ? '<span class="badge badge-green">Verificado</span>' : '<span class="badge badge-amber">En verificación</span>')
+          }</dd></div>
+        </div>
+
+        ${A.agruparLineas(o.items).map((g) => A.grupoHTML(g, true)).join("")}
+
+        <div class="totals" style="margin-top:18px;max-width:340px;margin-left:auto">
+          <div class="total-row"><span>Subtotal</span><span>${A.fmtUSD(o.totales.subtotal)}</span></div>
+          <div class="total-row"><span>Envío</span><span>${o.totales.envio === 0 ? (o.totales.envioGratis ? "Gratis" : "Sin costo") : A.fmtUSD(o.totales.envio)}</span></div>
+          <div class="total-row"><span>IVA (16 %)</span><span>${A.fmtUSD(o.totales.iva)}</span></div>
+          ${o.totales.descuento > 0 ? `<div class="total-row" style="color:var(--green-700)"><span>Descuento pago en Bs</span><span>−${A.fmtUSD(o.totales.descuento)}</span></div>` : ""}
+          <div class="total-row is-grand"><span>Total</span><span>${A.fmtUSD(o.totales.total)}</span></div>
+          <div class="total-row" style="justify-content:flex-end"><span class="tiny">${A.fmtBsRaw(o.totales.totalBs)}</span></div>
+        </div>
+
+        <div class="step-nav" style="margin-top:24px">
+          <div class="row" style="gap:10px;flex-wrap:wrap">
+            ${A.waURL() ? `<a class="btn btn-wa btn-sm" href="${A.waURL("Hola Estampy, consulto por mi pedido " + o.codigo)}" target="_blank" rel="noopener">${A.icon("whatsapp")} Escribir por WhatsApp</a>` : ""}
+            <button class="btn btn-ghost btn-sm" type="button" onclick="window.print()">${A.icon("print")} Imprimir</button>
+          </div>
+          <a class="btn btn-dark btn-sm" href="index.html#catalogo">Seguir comprando</a>
+        </div>
+      </div>
+
+      <!-- Estado del pedido / simulador -->
+      ${A.modoServidor
+        ? `<div class="panel" style="background:var(--gray-50)">
+            <div class="row" style="gap:12px;align-items:flex-start">
+              <span style="color:var(--brand);flex-shrink:0">${A.icon("shield")}</span>
+              <div>
+                <h3 style="font-size:.98rem">Esta información viene de nuestro sistema</h3>
+                <p class="small muted" style="margin-top:6px">El estado lo actualiza el equipo de Estampy a medida que avanza tu pedido. Si algo no cuadra, escríbenos al ${CFG.contact.phone} con tu número de pedido.</p>
+              </div>
+            </div>
+          </div>`
+        : `<div class="panel" style="background:var(--gray-50)">
+            <div class="row-between wrap-row">
+              <div style="max-width:56ch">
+                <h3 style="font-size:.98rem;display:flex;align-items:center;gap:8px">${A.icon("info", "icon-16")} Simulador de demostración</h3>
+                <p class="small muted" style="margin-top:6px">Estás viendo la tienda sin conexión con el servidor. Usa estos botones para hacer avanzar el pedido por sus estados y ver cómo se comporta el seguimiento.</p>
+              </div>
+              <div class="row" style="gap:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" type="button" id="btnReiniciar">${A.icon("refresh")} Reiniciar</button>
+                <button class="btn btn-soft btn-sm" type="button" id="btnAvanzar" ${entregado ? "disabled" : ""}>
+                  ${entregado ? "Pedido completado" : "Avanzar al siguiente estado"}
+                </button>
+              </div>
+            </div>
+          </div>`}`;
+
+    $("#panelPedido").classList.add("is-shown");
+
+    const btnA = $("#btnAvanzar");
+    if (btnA)
+      btnA.onclick = () => {
+        const nuevo = A.orders.avanzar(o.codigo);
+        pintarPedido(nuevo);
+        A.toast("Estado actualizado: " + A.orders.pasosDe(nuevo)[nuevo.estadoIndex].titulo, "truck");
+      };
+
+    const btnR = $("#btnReiniciar");
+    if (btnR)
+      btnR.onclick = () => {
+        const nuevo = A.orders.reiniciar(o.codigo);
+        pintarPedido(nuevo);
+        A.toast("Pedido reiniciado al primer estado", "refresh");
+      };
+  }
+
+  /* ---------- Autobúsqueda por URL ---------- */
+  const params = new URLSearchParams(location.search);
+  const codigoURL = params.get("codigo");
+  if (codigoURL) {
+    $("#inputCodigo").value = codigoURL;
+    buscar(codigoURL);
+  }
+
+  /* Mayúsculas automáticas al escribir */
+  $("#inputCodigo").addEventListener("input", (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+})();
+</script>
+</body>
+</html>

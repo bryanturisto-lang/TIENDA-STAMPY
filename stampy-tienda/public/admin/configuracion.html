@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuración — Estampy interno</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../assets/img/estampy-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="adm-page" class="hidden">
+  <div class="notice notice-blue" style="margin-bottom:12px" id="aviso"></div>
+  <div class="notice notice-amber hidden" style="margin-bottom:20px" id="avisoPendientes"></div>
+
+  <!-- Tasa e impuestos -->
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Tasa del día e impuestos</h2><p>Afecta todos los precios en bolívares de la tienda</p></div>
+      <span class="badge" id="badgeTasa"></span>
+    </div>
+    <div class="box-body">
+      <div class="grid-3" id="gridTasa">
+        <div class="field">
+          <label for="cfTasa">Tasa Bs por 1 USD <span class="req">*</span></label>
+          <input class="input" id="cfTasa" type="number" step="0.01" min="0.01">
+          <span class="field-hint" id="hintTasa"></span>
+        </div>
+        <div class="field">
+          <label for="cfActualizado">Fecha de la tasa</label>
+          <input class="input" id="cfActualizado" placeholder="02/08/2026">
+        </div>
+        <div class="field">
+          <label for="cfIva">IVA (%) </label>
+          <input class="input" id="cfIva" type="number" step="0.5" min="0" max="30">
+        </div>
+        <div class="field">
+          <label for="cfEnvioGratis">Envío gratis desde (USD)</label>
+          <input class="input" id="cfEnvioGratis" type="number" step="10" min="0">
+        </div>
+        <div class="field col-span-2">
+          <label>Simulación rápida</label>
+          <div class="notice notice-blue" id="simulacion"></div>
+        </div>
+      </div>
+      <div class="row" style="gap:10px;margin-top:18px">
+        <button class="btn btn-primary" type="button" id="btnGuardarTasa"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datos de pago -->
+  <div class="box">
+    <div class="box-head"><div><h2>Datos para recibir pagos</h2><p>Lo que el cliente ve en el checkout</p></div></div>
+    <div class="box-body">
+      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:12px">Pago móvil</h4>
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="field"><label for="pmBancoCfg">Banco</label><select class="select" id="pmBancoCfg"></select></div>
+        <div class="field"><label for="pmTelCfg">Teléfono</label><input class="input" id="pmTelCfg"></div>
+        <div class="field"><label for="pmRifCfg">RIF</label><input class="input" id="pmRifCfg"></div>
+        <div class="field"><label for="pmTitCfg">Titular</label><input class="input" id="pmTitCfg"></div>
+      </div>
+
+      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:12px">Transferencia</h4>
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="field"><label for="tfBancoCfg">Banco</label><select class="select" id="tfBancoCfg"></select></div>
+        <div class="field"><label for="tfCuentaCfg">Número de cuenta</label><input class="input mono" id="tfCuentaCfg"></div>
+        <div class="field"><label for="tfTipoCfg">Tipo de cuenta</label>
+          <select class="select" id="tfTipoCfg"><option>Corriente</option><option>Ahorro</option></select></div>
+        <div class="field"><label for="tfTitCfg">Titular</label><input class="input" id="tfTitCfg"></div>
+      </div>
+
+      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:12px">Zelle</h4>
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="field"><label for="zlEmailCfg">Correo</label><input class="input" id="zlEmailCfg"></div>
+        <div class="field"><label for="zlTitCfg">Titular</label><input class="input" id="zlTitCfg"></div>
+      </div>
+
+      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:12px">Binance (USDT)</h4>
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="field"><label for="bnIdCfg">Binance ID</label><input class="input mono" id="bnIdCfg"></div>
+        <div class="field"><label for="bnAliasCfg">Alias</label><input class="input" id="bnAliasCfg"></div>
+      </div>
+
+      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:12px">PayPal</h4>
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="field"><label for="ppEmailCfg">Correo</label><input class="input" id="ppEmailCfg"></div>
+        <div class="field"><label for="ppTitCfg">Titular</label><input class="input" id="ppTitCfg"></div>
+        <div class="field col-span-2"><label for="ppNotaCfg">Nota (opcional)</label><input class="input" id="ppNotaCfg" placeholder="Ej.: recuerda la comisión de PayPal"></div>
+      </div>
+
+      <h4 style="font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);margin-bottom:12px">Banesco Panamá</h4>
+      <div class="grid-2">
+        <div class="field"><label for="bpBancoCfg">Banco</label><input class="input" id="bpBancoCfg" value="Banesco Panamá"></div>
+        <div class="field"><label for="bpCuentaCfg">Número de cuenta</label><input class="input mono" id="bpCuentaCfg"></div>
+        <div class="field"><label for="bpTipoCfg">Tipo de cuenta</label>
+          <select class="select" id="bpTipoCfg"><option>Cuenta corriente</option><option>Cuenta de ahorro</option></select></div>
+        <div class="field"><label for="bpTitCfg">Titular</label><input class="input" id="bpTitCfg"></div>
+      </div>
+
+      <div class="row" style="gap:10px;margin-top:20px">
+        <button class="btn btn-primary" type="button" id="btnGuardarPagos"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zonas -->
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Zonas de envío</h2><p>Costo y tiempo de cada región</p></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnZona"></button>
+    </div>
+    <div class="box-body tight"><div class="tabla-wrap" id="tablaZonas"></div></div>
+  </div>
+
+  <!-- Tiendas -->
+  <div class="box">
+    <div class="box-head">
+      <div><h2>Taller y puntos de retiro</h2><p>Dónde el cliente puede retirar su pedido</p></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnTienda"></button>
+    </div>
+    <div class="box-body tight"><div class="tabla-wrap" id="tablaTiendas"></div></div>
+  </div>
+
+  <!-- Contacto -->
+  <div class="box">
+    <div class="box-head"><div><h2>Contacto de la tienda</h2><p>Aparece en el pie de página y en las páginas de ayuda</p></div></div>
+    <div class="box-body">
+      <div class="grid-2">
+        <div class="field"><label for="ctTel">Teléfono</label><input class="input" id="ctTel"></div>
+        <div class="field"><label for="ctWa">WhatsApp (solo dígitos, con código país)</label><input class="input" id="ctWa"></div>
+        <div class="field"><label for="ctMail">Correo</label><input class="input" id="ctMail"></div>
+        <div class="field"><label for="ctRif">RIF de la empresa</label><input class="input" id="ctRif"></div>
+        <div class="field"><label for="ctIg">Instagram (usuario, sin @)</label><input class="input" id="ctIg" placeholder="stampy"></div>
+      </div>
+      <div class="row" style="gap:10px;margin-top:18px">
+        <button class="btn btn-primary" type="button" id="btnGuardarContacto"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archivos de diseño -->
+  <div class="box">
+    <div class="box-head"><div><h2>Archivos de diseño</h2><p>Lo que el cliente puede adjuntar al pedir</p></div></div>
+    <div class="box-body">
+      <div class="grid-2">
+        <div class="field">
+          <label for="dsMax">Tamaño máximo por archivo (MB)</label>
+          <input class="input" id="dsMax" type="number" min="1" max="25" step="1">
+          <span class="field-hint">El servidor también limita el tamaño: si subes este valor, súbelo allá.</span>
+        </div>
+        <div class="field">
+          <label for="dsFormatos">Formatos aceptados</label>
+          <input class="input" id="dsFormatos" readonly>
+          <span class="field-hint">Los define el servidor: PNG, JPG, WEBP o PDF.</span>
+        </div>
+      </div>
+      <div class="row" style="gap:10px;margin-top:18px">
+        <button class="btn btn-primary" type="button" id="btnGuardarDisenos"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usuarios y peligro -->
+  <div class="box">
+    <div class="box-head"><div><h2>Usuarios del panel</h2><p>Perfiles de acceso y qué puede ver cada uno</p></div></div>
+    <div class="box-body tight"><div class="tabla-wrap" id="tablaUsuarios"></div></div>
+  </div>
+
+  <div class="box" style="border-color:var(--red-600)">
+    <div class="box-head" style="background:var(--red-100);border-bottom-color:var(--red-600)">
+      <div><h2 style="color:var(--red-600)">Zona delicada</h2><p>Acciones que borran datos. No se pueden deshacer.</p></div>
+    </div>
+    <div class="box-body">
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" type="button" id="btnResetConfig"></button>
+        <button class="btn btn-ghost btn-sm" type="button" id="btnResetPedidos" style="color:var(--red-600);border-color:var(--red-100)"></button>
+        <button class="btn btn-ghost btn-sm" type="button" id="btnResetTodo" style="color:var(--red-600);border-color:var(--red-100)"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/mockup.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="admin.js"></script>
+<script>
+(async function () {
+  const A = window.STAMPY;
+  if (!(await ADM.iniciar("configuracion", "Configuración", "Parámetros de la tienda pública"))) return;
+
+  const $ = (id) => document.getElementById(id);
+  const CFG = A.config;
+
+  $("aviso").innerHTML = A.icon("info") +
+    "<span>Todo lo que cambies aquí se aplica de inmediato en la tienda pública: precios en bolívares, costos de envío, datos bancarios del checkout y puntos de retiro.</span>";
+
+  /* ==================== Datos por configurar ====================
+     Los valores que empiezan con "[" son marcadores de ejemplo ("[Titular]").
+     Se resaltan en ámbar para que el dueño no abra la tienda sin cambiarlos. */
+  function marcarPendientes() {
+    document.querySelectorAll("#adm-page .field").forEach((f) => {
+      const ctl = f.querySelector("input, select");
+      if (!ctl) return;
+      const pend = ADM.esMarcador(ctl.value);
+      f.classList.toggle("is-pendiente", pend);
+      const lbl = f.querySelector("label");
+      let tag = lbl && lbl.querySelector(".pendiente-tag");
+      if (pend && lbl && !tag) lbl.insertAdjacentHTML("beforeend", '<span class="pendiente-tag">por configurar</span>');
+      if (!pend && tag) tag.remove();
+    });
+    const n = ADM.pendientesConfig().length;
+    const box = $("avisoPendientes");
+    box.classList.toggle("hidden", !n);
+    box.innerHTML = A.icon("alert") +
+      `<span><strong>${n} dato(s) por configurar.</strong> Tienen valores de ejemplo entre corchetes (como “[Titular]”) y los clientes los verían en el checkout o en el pie de página. Están resaltados en ámbar.</span>`;
+  }
+  document.addEventListener("input", (e) => { if (e.target.closest(".field")) marcarPendientesCampo(e.target); });
+  function marcarPendientesCampo(ctl) {
+    const f = ctl.closest(".field");
+    const pend = ADM.esMarcador(ctl.value);
+    f.classList.toggle("is-pendiente", pend);
+    const tag = f.querySelector(".pendiente-tag");
+    if (!pend && tag) tag.remove();
+  }
+  const conMarcador = (v) => A.escape(v || "") + (ADM.esMarcador(v) ? ' <span class="pendiente-tag">por configurar</span>' : "");
+
+  ["btnGuardarTasa", "btnGuardarPagos", "btnGuardarContacto", "btnGuardarDisenos"].forEach((id) => ($(id).innerHTML = A.icon("save") + " Guardar cambios"));
+  $("btnZona").innerHTML = A.icon("plusCircle") + " Agregar zona";
+  $("btnTienda").innerHTML = A.icon("plusCircle") + " Agregar tienda";
+  $("btnResetConfig").innerHTML = A.icon("refresh") + " Restaurar configuración de fábrica";
+  $("btnResetPedidos").innerHTML = A.icon("trash") + " Borrar todos los pedidos";
+  $("btnResetTodo").innerHTML = A.icon("alert") + " Reiniciar la tienda completa";
+
+  /* ==================== Tasa e impuestos ==================== */
+  function cargarTasa() {
+    $("cfTasa").value = CFG.bcvRate;
+    $("cfActualizado").value = CFG.bcvUpdated;
+    $("cfIva").value = A.round2(CFG.iva * 100);
+    $("cfEnvioGratis").value = CFG.freeShippingOver;
+    $("badgeTasa").textContent = "1 USD = " + CFG.bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2 }) + " Bs";
+    simular();
+  }
+
+  function simular() {
+    const tasa = parseFloat($("cfTasa").value) || CFG.bcvRate;
+    const iva = (parseFloat($("cfIva").value) || 0) / 100;
+    const ejemplo = 240;
+    const conIva = A.round2(ejemplo * (1 + iva));
+    const conDsc = A.round2(conIva - ejemplo * 0.05);
+    $("simulacion").innerHTML =
+      A.icon("info") +
+      `<span>Un pedido de ${A.fmtUSD(ejemplo)} (por ejemplo, 24 franelas a $10 al mayor) quedaría en <strong>${A.fmtUSD(conIva)}</strong> con IVA
+       (<strong>${A.fmtBsRaw(conIva * tasa)}</strong>), o <strong>${A.fmtUSD(conDsc)}</strong> pagando en bolívares con el 5 % de descuento.</span>`;
+  }
+  ["cfTasa", "cfIva"].forEach((id) => $(id).addEventListener("input", simular));
+
+  $("btnGuardarTasa").onclick = () => {
+    const tasa = parseFloat($("cfTasa").value);
+    if (!tasa || tasa <= 0) return A.toast("La tasa debe ser mayor que cero", "alert");
+    const anterior = CFG.bcvRate;
+    CFG.bcvRate = A.round2(tasa);
+    CFG.bcvUpdated = $("cfActualizado").value.trim() || CFG.bcvUpdated;
+    CFG.iva = Math.max(0, (parseFloat($("cfIva").value) || 0) / 100);
+    CFG.freeShippingOver = Math.max(0, parseFloat($("cfEnvioGratis").value) || 0);
+    A.guardarConfig();
+    A.bitacora.add("config-tasa", `Tasa ${anterior} → ${CFG.bcvRate} Bs · IVA ${A.round2(CFG.iva * 100)} % · envío gratis desde ${A.fmtUSD(CFG.freeShippingOver)}`);
+    cargarTasa();
+    A.toast("Configuración guardada. La tienda ya usa los nuevos valores.", "checkCircle");
+  };
+
+  /* ==================== Datos de pago ==================== */
+  function cargarPagos() {
+    // Si el banco guardado no está en la lista (p. ej. "[Banco por configurar]") se agrega
+    // como primera opción: así no se reemplaza en silencio por el primer banco.
+    const opsCon = (actual) => {
+      const lista = (CFG.bancos || []).slice();
+      if (actual && !lista.includes(actual)) lista.unshift(actual);
+      return lista.map((b) => `<option value="${A.escape(b)}">${A.escape(b)}</option>`).join("");
+    };
+    $("pmBancoCfg").innerHTML = opsCon(CFG.pagoMovil.banco); $("pmBancoCfg").value = CFG.pagoMovil.banco;
+    $("tfBancoCfg").innerHTML = opsCon(CFG.transferencia.banco); $("tfBancoCfg").value = CFG.transferencia.banco;
+    $("pmTelCfg").value = CFG.pagoMovil.telefono;
+    $("pmRifCfg").value = CFG.pagoMovil.rif;
+    $("pmTitCfg").value = CFG.pagoMovil.titular;
+    $("tfCuentaCfg").value = CFG.transferencia.cuenta;
+    $("tfTipoCfg").value = CFG.transferencia.tipo;
+    $("tfTitCfg").value = CFG.transferencia.titular;
+    $("zlEmailCfg").value = CFG.zelle.email;
+    $("zlTitCfg").value = CFG.zelle.titular;
+    $("bnIdCfg").value = (CFG.binance || {}).id || "";
+    $("bnAliasCfg").value = (CFG.binance || {}).alias || "";
+    $("ppEmailCfg").value = (CFG.paypal || {}).email || "";
+    $("ppTitCfg").value = (CFG.paypal || {}).titular || "";
+    $("ppNotaCfg").value = (CFG.paypal || {}).nota || "";
+    $("bpBancoCfg").value = (CFG.banescoPanama || {}).banco || "Banesco Panamá";
+    $("bpCuentaCfg").value = (CFG.banescoPanama || {}).cuenta || "";
+    $("bpTipoCfg").value = (CFG.banescoPanama || {}).tipo || "Cuenta corriente";
+    $("bpTitCfg").value = (CFG.banescoPanama || {}).titular || "";
+  }
+
+  $("btnGuardarPagos").onclick = () => {
+    CFG.pagoMovil = { banco: $("pmBancoCfg").value, telefono: $("pmTelCfg").value.trim(), rif: $("pmRifCfg").value.trim(), titular: $("pmTitCfg").value.trim() };
+    CFG.transferencia = { banco: $("tfBancoCfg").value, cuenta: $("tfCuentaCfg").value.trim(), tipo: $("tfTipoCfg").value, titular: $("tfTitCfg").value.trim(), rif: CFG.pagoMovil.rif };
+    CFG.zelle = { email: $("zlEmailCfg").value.trim(), titular: $("zlTitCfg").value.trim() };
+    CFG.binance = { id: $("bnIdCfg").value.trim(), alias: $("bnAliasCfg").value.trim() };
+    CFG.paypal = { email: $("ppEmailCfg").value.trim(), titular: $("ppTitCfg").value.trim(), nota: $("ppNotaCfg").value.trim() };
+    CFG.banescoPanama = { banco: $("bpBancoCfg").value.trim(), cuenta: $("bpCuentaCfg").value.trim(), tipo: $("bpTipoCfg").value, titular: $("bpTitCfg").value.trim() };
+    A.guardarConfig();
+    A.bitacora.add("config-pagos", "Se actualizaron los datos bancarios de la tienda");
+    marcarPendientes();
+    A.toast("Datos de pago actualizados", "checkCircle");
+  };
+
+  /* ==================== Zonas ==================== */
+  function pintarZonas() {
+    $("tablaZonas").innerHTML = `<table class="tabla">
+      <thead><tr><th>Zona</th><th class="num">Costo</th><th class="num">Días de envío</th><th class="num">Pedidos activos</th><th class="acciones">Acciones</th></tr></thead>
+      <tbody>${CFG.zonas.map((z) => {
+        const usados = A.orders.activos().filter((o) => o.entrega.zonaId === z.id).length;
+        return `<tr>
+          <td class="principal">${A.escape(z.nombre)}</td>
+          <td class="num"><strong>${A.fmtUSD(z.costo)}</strong><div class="sec">${A.fmtBsRaw(z.costo * CFG.bcvRate)}</div></td>
+          <td class="num">${z.dias}</td>
+          <td class="num">${usados}</td>
+          <td class="acciones">
+            <button class="tbtn" type="button" onclick="editarZona('${z.id}')" title="Editar">${A.icon("edit")}</button>
+            <button class="tbtn danger" type="button" onclick="borrarZona('${z.id}')" title="Eliminar">${A.icon("trash")}</button>
+          </td>
+        </tr>`;
+      }).join("")}</tbody></table>`;
+  }
+
+  function formZona(z) {
+    return `<div class="grid-2">
+      <div class="field col-span-2"><label for="zNombre">Nombre de la zona</label>
+        <input class="input" id="zNombre" value="${A.escape(z.nombre || "")}" placeholder="Región Central (Aragua, Carabobo)"></div>
+      <div class="field"><label for="zCosto">Costo del envío (USD)</label>
+        <input class="input" id="zCosto" type="number" min="0" step="1" value="${z.costo == null ? 10 : z.costo}"></div>
+      <div class="field"><label for="zDias">Días hábiles de envío (se suman a la producción)</label>
+        <input class="input" id="zDias" type="number" min="1" max="15" step="1" value="${z.dias || 2}"></div>
+    </div>`;
+  }
+
+  window.editarZona = function (id) {
+    const z = CFG.zonas.find((x) => x.id === id);
+    ADM.modal({
+      titulo: "Editar zona", ancho: "angosto", cuerpo: formZona(z),
+      pie: `<button class="btn btn-ghost" type="button" onclick="ADM.cerrarModal()">Cancelar</button>
+            <button class="btn btn-primary" type="button" id="okZona">Guardar</button>`,
+      alAbrir: (bg) => {
+        bg.querySelector("#okZona").onclick = () => {
+          z.nombre = bg.querySelector("#zNombre").value.trim() || z.nombre;
+          z.costo = Math.max(0, parseFloat(bg.querySelector("#zCosto").value) || 0);
+          z.dias = Math.max(1, parseInt(bg.querySelector("#zDias").value, 10) || 1);
+          A.guardarConfig();
+          A.bitacora.add("config-zona", `Zona ${z.nombre}: ${A.fmtUSD(z.costo)} / ${z.dias} días`);
+          ADM.cerrarModal(); pintarZonas();
+          A.toast("Zona actualizada", "checkCircle");
+        };
+      },
+    });
+  };
+
+  $("btnZona").onclick = () =>
+    ADM.modal({
+      titulo: "Nueva zona de envío", ancho: "angosto", cuerpo: formZona({ costo: 10, dias: 2 }),
+      pie: `<button class="btn btn-ghost" type="button" onclick="ADM.cerrarModal()">Cancelar</button>
+            <button class="btn btn-primary" type="button" id="okZonaNueva">Agregar</button>`,
+      alAbrir: (bg) => {
+        bg.querySelector("#okZonaNueva").onclick = () => {
+          const nombre = bg.querySelector("#zNombre").value.trim();
+          if (!nombre) return A.toast("Escribe el nombre de la zona", "alert");
+          let id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20);
+          while (CFG.zonas.some((z) => z.id === id)) id += "x";
+          CFG.zonas.push({
+            id, nombre,
+            costo: Math.max(0, parseFloat(bg.querySelector("#zCosto").value) || 0),
+            dias: Math.max(1, parseInt(bg.querySelector("#zDias").value, 10) || 1),
+          });
+          A.guardarConfig();
+          A.bitacora.add("config-zona", `Se agregó la zona ${nombre}`);
+          ADM.cerrarModal(); pintarZonas();
+          A.toast("Zona agregada", "checkCircle");
+        };
+      },
+    });
+
+  window.borrarZona = function (id) {
+    if (CFG.zonas.length <= 1) return A.toast("Debe quedar al menos una zona de envío", "alert");
+    const z = CFG.zonas.find((x) => x.id === id);
+    ADM.confirmar("Eliminar zona", `Se quitará <strong>${A.escape(z.nombre)}</strong> del checkout. Los pedidos ya hechos conservan su información.`, () => {
+      CFG.zonas = CFG.zonas.filter((x) => x.id !== id);
+      A.guardarConfig();
+      A.bitacora.add("config-zona", `Se eliminó la zona ${z.nombre}`);
+      pintarZonas();
+      A.toast("Zona eliminada", "checkCircle");
+    }, "Eliminar", true);
+  };
+
+  /* ==================== Tiendas ==================== */
+  function pintarTiendas() {
+    $("tablaTiendas").innerHTML = `<table class="tabla">
+      <thead><tr><th>Punto de retiro</th><th>Dirección</th><th>Horario</th><th>Teléfono</th><th class="acciones">Acciones</th></tr></thead>
+      <tbody>${CFG.tiendas.map((t) => `<tr>
+        <td class="principal">${conMarcador(t.nombre)}</td>
+        <td class="small">${conMarcador(t.direccion)}</td>
+        <td class="small muted">${conMarcador(t.horario)}</td>
+        <td class="small">${conMarcador(t.telefono)}</td>
+        <td class="acciones">
+          <button class="tbtn" type="button" onclick="editarTienda('${t.id}')" title="Editar">${A.icon("edit")}</button>
+          <button class="tbtn danger" type="button" onclick="borrarTienda('${t.id}')" title="Eliminar">${A.icon("trash")}</button>
+        </td>
+      </tr>`).join("")}</tbody></table>`;
+  }
+
+  function formTienda(t) {
+    return `<div class="grid-2">
+      <div class="field col-span-2"><label for="tNombre">Nombre</label>
+        <input class="input" id="tNombre" value="${A.escape(t.nombre || "")}" placeholder="Taller Estampy — Caracas"></div>
+      <div class="field col-span-2"><label for="tDir">Dirección</label>
+        <input class="input" id="tDir" value="${A.escape(t.direccion || "")}"></div>
+      <div class="field"><label for="tHorario">Horario</label>
+        <input class="input" id="tHorario" value="${A.escape(t.horario || "")}" placeholder="Lun a Sáb · 10:00 a 19:00"></div>
+      <div class="field"><label for="tTel">Teléfono</label>
+        <input class="input" id="tTel" value="${A.escape(t.telefono || "")}"></div>
+    </div>`;
+  }
+
+  window.editarTienda = function (id) {
+    const t = CFG.tiendas.find((x) => x.id === id);
+    ADM.modal({
+      titulo: "Editar tienda", cuerpo: formTienda(t),
+      pie: `<button class="btn btn-ghost" type="button" onclick="ADM.cerrarModal()">Cancelar</button>
+            <button class="btn btn-primary" type="button" id="okT">Guardar</button>`,
+      alAbrir: (bg) => {
+        bg.querySelector("#okT").onclick = () => {
+          t.nombre = bg.querySelector("#tNombre").value.trim() || t.nombre;
+          t.direccion = bg.querySelector("#tDir").value.trim();
+          t.horario = bg.querySelector("#tHorario").value.trim();
+          t.telefono = bg.querySelector("#tTel").value.trim();
+          A.guardarConfig();
+          A.bitacora.add("config-tienda", `Tienda ${t.nombre} actualizada`);
+          ADM.cerrarModal(); pintarTiendas();
+          A.toast("Tienda actualizada", "checkCircle");
+        };
+      },
+    });
+  };
+
+  $("btnTienda").onclick = () =>
+    ADM.modal({
+      titulo: "Nueva tienda", cuerpo: formTienda({}),
+      pie: `<button class="btn btn-ghost" type="button" onclick="ADM.cerrarModal()">Cancelar</button>
+            <button class="btn btn-primary" type="button" id="okTN">Agregar</button>`,
+      alAbrir: (bg) => {
+        bg.querySelector("#okTN").onclick = () => {
+          const nombre = bg.querySelector("#tNombre").value.trim();
+          if (!nombre) return A.toast("Escribe el nombre de la tienda", "alert");
+          let id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20);
+          while (CFG.tiendas.some((t) => t.id === id)) id += "x";
+          CFG.tiendas.push({
+            id, nombre,
+            direccion: bg.querySelector("#tDir").value.trim(),
+            horario: bg.querySelector("#tHorario").value.trim() || "Lun a Sáb · 10:00 a 18:00",
+            telefono: bg.querySelector("#tTel").value.trim(),
+          });
+          A.guardarConfig();
+          A.bitacora.add("config-tienda", `Se agregó la tienda ${nombre}`);
+          ADM.cerrarModal(); pintarTiendas();
+          A.toast("Tienda agregada", "checkCircle");
+        };
+      },
+    });
+
+  window.borrarTienda = function (id) {
+    if (CFG.tiendas.length <= 1) return A.toast("Debe quedar al menos una tienda", "alert");
+    const t = CFG.tiendas.find((x) => x.id === id);
+    ADM.confirmar("Eliminar tienda", `Se quitará <strong>${A.escape(t.nombre)}</strong> de las opciones de retiro.`, () => {
+      CFG.tiendas = CFG.tiendas.filter((x) => x.id !== id);
+      A.guardarConfig();
+      A.bitacora.add("config-tienda", `Se eliminó la tienda ${t.nombre}`);
+      pintarTiendas();
+      A.toast("Tienda eliminada", "checkCircle");
+    }, "Eliminar", true);
+  };
+
+  /* ==================== Contacto ==================== */
+  function cargarContacto() {
+    $("ctTel").value = CFG.contact.phone;
+    $("ctWa").value = CFG.contact.whatsapp;
+    $("ctMail").value = CFG.contact.email;
+    $("ctRif").value = CFG.contact.rif;
+    $("ctIg").value = CFG.contact.instagram || "";
+  }
+  $("btnGuardarContacto").onclick = () => {
+    CFG.contact = {
+      ...CFG.contact, // conserva cualquier otro dato de contacto
+      phone: $("ctTel").value.trim(),
+      whatsapp: $("ctWa").value.replace(/[^0-9]/g, ""),
+      email: $("ctMail").value.trim(),
+      rif: $("ctRif").value.trim(),
+      instagram: $("ctIg").value.trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, ""),
+    };
+    A.guardarConfig();
+    A.bitacora.add("config-contacto", "Datos de contacto actualizados");
+    cargarContacto(); marcarPendientes();
+    A.toast("Contacto actualizado", "checkCircle");
+  };
+
+  /* ==================== Archivos de diseño ==================== */
+  function cargarDisenos() {
+    const d = CFG.disenos || {};
+    $("dsMax").value = d.maxMB || 8;
+    $("dsFormatos").value = d.formatos || "PNG, JPG, WEBP o PDF";
+  }
+  $("btnGuardarDisenos").onclick = () => {
+    const mb = parseInt($("dsMax").value, 10);
+    if (!(mb >= 1 && mb <= 25)) return A.toast("Indica un tamaño entre 1 y 25 MB", "alert");
+    CFG.disenos = { ...(CFG.disenos || {}), maxMB: mb, formatos: (CFG.disenos && CFG.disenos.formatos) || "PNG, JPG, WEBP o PDF" };
+    A.guardarConfig();
+    A.bitacora.add("config-disenos", `Tamaño máximo de archivos de diseño: ${mb} MB`);
+    A.toast("Límite de archivos actualizado", "checkCircle");
+  };
+
+  /* ==================== Usuarios ==================== */
+  $("tablaUsuarios").innerHTML = `<table class="tabla">
+    <thead><tr><th>Usuario</th><th>Perfil</th><th>Puede ver</th></tr></thead>
+    <tbody>${A.usuarios.map((u) => `<tr>
+      <td>
+        <div class="row" style="gap:10px">
+          <span class="avatar">${u.nombre.split(" ").map((x) => x[0]).slice(0, 2).join("")}</span>
+          <span><span class="principal">${A.escape(u.nombre)}</span><div class="sec mono">${u.usuario}</div></span>
+        </div>
+      </td>
+      <td>${A.escape(u.cargo)}</td>
+      <td class="small muted">${(A.permisos[u.rol] || []).join(", ")}</td>
+    </tr>`).join("")}</tbody></table>
+    <div style="padding:14px 16px;border-top:1px solid var(--line)">
+      <p class="tiny muted">${A.modoServidor
+        ? "Con servidor, los usuarios y sus claves se definen en la variable STAMPY_USUARIOS de Netlify. Esta tabla muestra los perfiles de ejemplo."
+        : "Modo demostración local: los usuarios están definidos en <span class=\"mono\">assets/js/app.js</span>. En producción se configuran en el servidor."}</p>
+    </div>`;
+
+  /* ==================== Zona delicada ==================== */
+  $("btnResetConfig").onclick = () =>
+    ADM.confirmar("Restaurar configuración", "Vuelve la tasa, el IVA, las zonas, tiendas y datos bancarios a los valores originales. Los pedidos y el catálogo no se tocan.", () => {
+      A.restaurarConfig();
+      A.bitacora.add("config-restaurada", "Configuración devuelta a los valores de fábrica");
+      cargarTasa(); cargarPagos(); cargarContacto(); cargarDisenos(); pintarZonas(); pintarTiendas(); marcarPendientes();
+      A.toast("Configuración restaurada", "refresh");
+    }, "Restaurar");
+
+  $("btnResetPedidos").onclick = () =>
+    ADM.confirmar("Borrar todos los pedidos", "Se eliminan los <strong>" + A.orders.all().length + " pedidos</strong> registrados, incluidos los de ejemplo. El catálogo y la configuración se conservan.", () => {
+      A.store.set("stampy.orders.v1", []);
+      A.bitacora.add("pedidos-borrados", "Se eliminaron todos los pedidos");
+      A.toast("Pedidos eliminados", "trash");
+      setTimeout(() => location.reload(), 700);
+    }, "Borrar pedidos", true);
+
+  $("btnResetTodo").onclick = () =>
+    ADM.confirmar(
+      "Reiniciar la tienda completa",
+      A.modoServidor
+        ? "Borra <strong>en el servidor</strong> los pedidos, el catálogo, la configuración y la bitácora. Afecta a todo el equipo y a lo que ven los clientes. Al volver a entrar se vuelven a sembrar los datos de ejemplo."
+        : "Borra pedidos, catálogo editado, configuración, carrito, bitácora y sesión de este navegador. Todo vuelve al estado inicial.",
+      async () => {
+        if (A.modoServidor) {
+          try {
+            await A.api.reiniciar();
+          } catch (e) {
+            return A.toast("No se pudo reiniciar: " + e.message, "alert");
+          }
+        }
+        ["stampy.orders.v1", "stampy.catalogo.v1", "stampy.config.v1", "stampy.cart.v1", "stampy.favs.v1",
+         "stampy.bitacora.v1", "stampy.seeded.v1", "stampy.seeded.v2", "stampy.sesion.v1", "stampy.mispedidos.v1"]
+          .forEach((k) => A.store.set(k, null));
+        A.toast("Tienda reiniciada", "refresh");
+        setTimeout(() => (location.href = "index.html"), 700);
+      },
+      "Reiniciar todo",
+      true
+    );
+
+  /* ==================== Arranque ==================== */
+  cargarTasa(); cargarPagos(); cargarContacto(); cargarDisenos(); pintarZonas(); pintarTiendas(); marcarPendientes();
+})();
+</script>
+</body>
+</html>

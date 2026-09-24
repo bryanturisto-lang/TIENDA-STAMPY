@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finalizar compra — Estampy</title>
+<meta name="description" content="Completa tu pedido en Estampy: pago móvil, transferencia o Zelle, con delivery a toda Venezuela o retiro en el taller.">
+<link rel="icon" href="assets/img/estampy-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<div id="app-header"></div>
+
+<main class="section section--tight" id="contenido">
+  <div class="wrap">
+
+    <!-- Carrito vacío -->
+    <div id="vacio" class="hidden">
+      <div class="empty-state">
+        <span id="vacioIcon"></span>
+        <h2 style="margin-bottom:8px">Tu carrito está vacío</h2>
+        <p class="small">Agrega al menos un producto para poder continuar con el pedido.</p>
+        <a class="btn btn-dark" style="margin-top:20px" href="index.html#catalogo">Ver el catálogo</a>
+      </div>
+    </div>
+
+    <div id="checkout" class="hidden">
+      <div class="sec-head" style="margin-bottom:22px">
+        <span class="eyebrow">Finalizar compra</span>
+        <h2>Tres pasos y lo ponemos a producir</h2>
+      </div>
+
+      <div id="avisoMinimo" class="hidden" style="margin-bottom:20px"></div>
+
+      <!-- Indicador de pasos -->
+      <div class="steps" id="steps">
+        <div class="step is-active" data-step="1"><span class="step-num">1</span><span class="step-label">Tus datos</span></div>
+        <span class="step-line"></span>
+        <div class="step" data-step="2"><span class="step-num">2</span><span class="step-label">Entrega</span></div>
+        <span class="step-line"></span>
+        <div class="step" data-step="3"><span class="step-num">3</span><span class="step-label">Pago</span></div>
+        <span class="step-line"></span>
+        <div class="step" data-step="4"><span class="step-num">4</span><span class="step-label">Confirmación</span></div>
+      </div>
+
+      <div class="checkout-grid">
+        <div>
+
+          <!-- ============ PASO 1: DATOS ============ -->
+          <section class="checkout-step is-active" data-panel="1">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>¿Quién hace la compra?</h2>
+                <p>Usamos estos datos para la factura y para enviarte la prueba de diseño por WhatsApp. Revisa bien tu teléfono.</p>
+              </div>
+
+              <form id="formDatos" class="stack-16" novalidate>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="nombre">Nombre y apellido <span class="req">*</span></label>
+                    <input class="input" id="nombre" name="nombre" placeholder="María Rodríguez" autocomplete="name">
+                    <span class="field-error">Escribe tu nombre completo.</span>
+                  </div>
+                  <div class="field">
+                    <label for="cedula">Cédula o RIF <span class="req">*</span></label>
+                    <input class="input" id="cedula" name="cedula" placeholder="V-12.345.678">
+                    <span class="field-error">Formato: V-12.345.678 o J-12345678.</span>
+                  </div>
+                  <div class="field">
+                    <label for="telefono">Teléfono (WhatsApp) <span class="req">*</span></label>
+                    <input class="input" id="telefono" name="telefono" placeholder="0412-5551234" inputmode="tel" autocomplete="tel">
+                    <span class="field-error">Usa un número venezolano: 0412-5551234.</span>
+                  </div>
+                  <div class="field">
+                    <label for="email">Correo electrónico <span class="req">*</span></label>
+                    <input class="input" id="email" name="email" type="email" placeholder="maria@correo.com" autocomplete="email">
+                    <span class="field-error">Revisa el correo, parece incompleto.</span>
+                  </div>
+                </div>
+
+                <label class="check">
+                  <input type="checkbox" id="facturaEmpresa">
+                  <span class="check-mark" id="ckFactura"></span>
+                  <span>Necesito factura a nombre de una empresa</span>
+                </label>
+
+                <div id="datosEmpresa" class="grid-2 hidden">
+                  <div class="field">
+                    <label for="razonSocial">Razón social</label>
+                    <input class="input" id="razonSocial" placeholder="Inversiones Ejemplo C.A.">
+                  </div>
+                  <div class="field">
+                    <label for="rifEmpresa">RIF de la empresa</label>
+                    <input class="input" id="rifEmpresa" placeholder="J-40123456-7">
+                  </div>
+                </div>
+
+                <div class="notice notice-blue" id="avisoPrivacidad"></div>
+              </form>
+
+              <div class="step-nav">
+                <a class="btn btn-ghost" href="index.html#catalogo">Seguir comprando</a>
+                <button class="btn btn-primary" type="button" data-next="2">Continuar a entrega</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ PASO 2: ENTREGA ============ -->
+          <section class="checkout-step" data-panel="2">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>¿Cómo quieres recibirlo?</h2>
+                <p>Te lo enviamos a tu dirección o lo retiras sin costo en el taller. Primero lo producimos y luego sale.</p>
+              </div>
+
+              <div class="opt-cards cols-2" id="modoEntrega">
+                <label class="opt">
+                  <input type="radio" name="modoEntrega" value="delivery" checked>
+                  <span class="opt-mark"></span>
+                  <span class="opt-body">
+                    <strong>Delivery a domicilio</strong>
+                    <span id="descDelivery">Te lo llevamos a la puerta cuando esté listo.</span>
+                  </span>
+                  <span id="iconDelivery" class="opt-icon"></span>
+                </label>
+                <label class="opt">
+                  <input type="radio" name="modoEntrega" value="tienda">
+                  <span class="opt-mark"></span>
+                  <span class="opt-body">
+                    <strong>Retiro en el taller</strong>
+                    <span id="descTienda">Sin costo. Te avisamos por WhatsApp cuando esté listo.</span>
+                  </span>
+                  <span id="iconTienda" class="opt-icon"></span>
+                </label>
+              </div>
+
+              <!-- Delivery -->
+              <div id="bloqueDelivery" class="stack-16" style="margin-top:24px">
+                <div class="field">
+                  <label for="zona">Zona de entrega <span class="req">*</span></label>
+                  <select class="select" id="zona"></select>
+                  <span class="field-hint" id="hintZona"></span>
+                </div>
+                <div class="field">
+                  <label for="direccion">Dirección completa <span class="req">*</span></label>
+                  <textarea class="textarea" id="direccion" placeholder="Av. Principal, edificio o casa, piso y apartamento, urbanización…"></textarea>
+                  <span class="field-error">Escribe la dirección con calle, edificio y número.</span>
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="ciudad">Ciudad <span class="req">*</span></label>
+                    <input class="input" id="ciudad" placeholder="Caracas">
+                    <span class="field-error">Indica la ciudad.</span>
+                  </div>
+                  <div class="field">
+                    <label for="referencia">Punto de referencia</label>
+                    <input class="input" id="referencia" placeholder="Al lado de la panadería, portón azul…">
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="notaEntrega">Nota para el repartidor</label>
+                  <input class="input" id="notaEntrega" placeholder="Entregar después de las 2 pm, tocar el timbre 3B…">
+                </div>
+              </div>
+
+              <!-- Retiro en tienda -->
+              <div id="bloqueTienda" class="hidden" style="margin-top:24px">
+                <div class="opt-cards" id="tiendasOpts"></div>
+                <div class="notice notice-blue" style="margin-top:16px" id="avisoTienda"></div>
+                <div class="field" style="margin-top:16px">
+                  <label for="retiraOtro">¿Retira otra persona? Escribe su nombre y cédula</label>
+                  <input class="input" id="retiraOtro" placeholder="Pedro Pérez, V-15.222.333 (opcional)">
+                </div>
+              </div>
+
+              <div class="step-nav">
+                <button class="btn btn-ghost" type="button" data-prev="1">Volver</button>
+                <button class="btn btn-primary" type="button" data-next="3">Continuar al pago</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ PASO 3: PAGO ============ -->
+          <section class="checkout-step" data-panel="3">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>¿Cómo vas a pagar?</h2>
+                <p>Pagando en bolívares (pago móvil o transferencia) te aplicamos 5 % de descuento sobre el total.</p>
+              </div>
+
+              <div class="opt-cards" id="metodosPago"></div>
+
+              <!-- Pago móvil -->
+              <div id="bloquePagoMovil" style="margin-top:24px">
+                <h3 style="font-size:1rem;margin-bottom:12px">1. Haz el pago móvil a estos datos</h3>
+                <div class="bank-box">
+                  <dl id="datosPagoMovil"></dl>
+                  <div class="bank-total">
+                    <span class="small" style="font-weight:600">Monto exacto a pagar</span>
+                    <div style="text-align:right">
+                      <strong id="montoBs">Bs 0,00</strong>
+                      <div class="tiny muted" id="montoUsd"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 style="font-size:1rem;margin:24px 0 12px">2. Reporta tu pago</h3>
+                <form id="formPagoMovil" class="grid-2" novalidate>
+                  <div class="field">
+                    <label for="pmBanco">Banco desde el que pagaste <span class="req">*</span></label>
+                    <select class="select" id="pmBanco"></select>
+                  </div>
+                  <div class="field">
+                    <label for="pmTelefono">Teléfono emisor <span class="req">*</span></label>
+                    <input class="input" id="pmTelefono" placeholder="0412-5551234" inputmode="tel">
+                    <span class="field-error">Formato: 0412-5551234.</span>
+                  </div>
+                  <div class="field">
+                    <label for="pmCedula">Cédula del emisor <span class="req">*</span></label>
+                    <input class="input" id="pmCedula" placeholder="V-12.345.678">
+                    <span class="field-error">Formato: V-12.345.678.</span>
+                  </div>
+                  <div class="field">
+                    <label for="pmReferencia">Número de referencia <span class="req">*</span></label>
+                    <input class="input" id="pmReferencia" placeholder="884512" inputmode="numeric">
+                    <span class="field-error">Solo números, mínimo 4 dígitos.</span>
+                  </div>
+                  <div class="field">
+                    <label for="pmFecha">Fecha del pago <span class="req">*</span></label>
+                    <input class="input" id="pmFecha" type="date">
+                    <span class="field-error">Selecciona la fecha en que hiciste el pago.</span>
+                  </div>
+                  <div class="field">
+                    <label for="pmComprobante">Captura del comprobante</label>
+                    <input class="input" id="pmComprobante" type="file" accept="image/*,.pdf" style="padding:8px 12px">
+                    <span class="field-hint">Opcional, pero acelera la verificación.</span>
+                  </div>
+                </form>
+                <div class="notice notice-amber" style="margin-top:16px" id="avisoPM"></div>
+              </div>
+
+              <!-- Transferencia -->
+              <div id="bloqueTransferencia" class="hidden" style="margin-top:24px">
+                <h3 style="font-size:1rem;margin-bottom:12px">1. Transfiere a esta cuenta</h3>
+                <div class="bank-box"><dl id="datosTransferencia"></dl></div>
+                <h3 style="font-size:1rem;margin:24px 0 12px">2. Reporta la transferencia</h3>
+                <form id="formTransferencia" class="grid-2" novalidate>
+                  <div class="field">
+                    <label for="tfBanco">Banco emisor <span class="req">*</span></label>
+                    <select class="select" id="tfBanco"></select>
+                  </div>
+                  <div class="field">
+                    <label for="tfReferencia">Número de referencia <span class="req">*</span></label>
+                    <input class="input" id="tfReferencia" placeholder="0091774" inputmode="numeric">
+                    <span class="field-error">Solo números, mínimo 4 dígitos.</span>
+                  </div>
+                  <div class="field">
+                    <label for="tfFecha">Fecha de la transferencia <span class="req">*</span></label>
+                    <input class="input" id="tfFecha" type="date">
+                    <span class="field-error">Selecciona la fecha.</span>
+                  </div>
+                  <div class="field">
+                    <label for="tfTitular">Titular de la cuenta emisora <span class="req">*</span></label>
+                    <input class="input" id="tfTitular" placeholder="María Rodríguez">
+                    <span class="field-error">Escribe el nombre del titular.</span>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Zelle -->
+              <div id="bloqueZelle" class="hidden" style="margin-top:24px">
+                <h3 style="font-size:1rem;margin-bottom:12px">Envía el Zelle a estos datos</h3>
+                <div class="bank-box"><dl id="datosZelle"></dl></div>
+                <form id="formZelle" class="grid-2" style="margin-top:20px" novalidate>
+                  <div class="field">
+                    <label for="zlTitular">Titular de la cuenta emisora <span class="req">*</span></label>
+                    <input class="input" id="zlTitular" placeholder="Maria Rodriguez">
+                    <span class="field-error">Escribe el nombre del titular.</span>
+                  </div>
+                  <div class="field">
+                    <label for="zlEmail">Correo desde el que enviaste <span class="req">*</span></label>
+                    <input class="input" id="zlEmail" type="email" placeholder="maria@correo.com">
+                    <span class="field-error">Revisa el correo.</span>
+                  </div>
+                  <div class="field col-span-2">
+                    <label for="zlConfirmacion">Número de confirmación <span class="req">*</span></label>
+                    <input class="input" id="zlConfirmacion" placeholder="Ej.: 1122334455">
+                    <span class="field-error">Ingresa el número de confirmación del envío.</span>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Binance -->
+              <div id="bloqueBinance" class="hidden" style="margin-top:24px">
+                <h3 style="font-size:1rem;margin-bottom:12px">Envía el USDT a este ID de Binance Pay</h3>
+                <div class="bank-box"><dl id="datosBinance"></dl></div>
+                <form id="formBinance" class="grid-2" style="margin-top:20px" novalidate>
+                  <div class="field">
+                    <label for="bnUsuario">Tu usuario o correo de Binance <span class="req">*</span></label>
+                    <input class="input" id="bnUsuario" placeholder="usuario@binance.com">
+                    <span class="field-error">Ingresa tu usuario o correo de Binance.</span>
+                  </div>
+                  <div class="field">
+                    <label for="bnConfirmacion">ID de la transacción <span class="req">*</span></label>
+                    <input class="input" id="bnConfirmacion" placeholder="Ej.: 118822334455">
+                    <span class="field-error">Ingresa el ID de la transacción.</span>
+                  </div>
+                </form>
+              </div>
+
+              <!-- PayPal -->
+              <div id="bloquePaypal" class="hidden" style="margin-top:24px">
+                <h3 style="font-size:1rem;margin-bottom:12px">Envía el pago a estos datos</h3>
+                <div class="bank-box"><dl id="datosPaypal"></dl></div>
+                <form id="formPaypal" class="grid-2" style="margin-top:20px" novalidate>
+                  <div class="field">
+                    <label for="ppEmail">Correo desde el que enviaste <span class="req">*</span></label>
+                    <input class="input" id="ppEmail" type="email" placeholder="maria@correo.com">
+                    <span class="field-error">Revisa el correo.</span>
+                  </div>
+                  <div class="field col-span-2">
+                    <label for="ppConfirmacion">Número de transacción <span class="req">*</span></label>
+                    <input class="input" id="ppConfirmacion" placeholder="Ej.: 5AB123456C789012D">
+                    <span class="field-error">Ingresa el número de transacción de PayPal.</span>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Banesco Panamá -->
+              <div id="bloqueBanescoPanama" class="hidden" style="margin-top:24px">
+                <h3 style="font-size:1rem;margin-bottom:12px">Transfiere a esta cuenta en Panamá</h3>
+                <div class="bank-box"><dl id="datosBanescoPanama"></dl></div>
+                <form id="formBanescoPanama" class="grid-2" style="margin-top:20px" novalidate>
+                  <div class="field">
+                    <label for="bpTitular">Titular de la cuenta emisora <span class="req">*</span></label>
+                    <input class="input" id="bpTitular" placeholder="María Rodríguez">
+                    <span class="field-error">Escribe el nombre del titular.</span>
+                  </div>
+                  <div class="field">
+                    <label for="bpReferencia">Número de referencia <span class="req">*</span></label>
+                    <input class="input" id="bpReferencia" placeholder="Ej.: 0091774" inputmode="numeric">
+                    <span class="field-error">Ingresa el número de referencia.</span>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Efectivo en tienda -->
+              <div id="bloqueEfectivo" class="hidden" style="margin-top:24px">
+                <div class="notice notice-green" id="avisoEfectivo"></div>
+                <div class="field" style="margin-top:16px;max-width:320px">
+                  <label for="efMoneda">¿En qué moneda pagarás?</label>
+                  <select class="select" id="efMoneda">
+                    <option value="usd">Dólares en efectivo</option>
+                    <option value="bs">Bolívares en efectivo</option>
+                    <option value="mixto">Mixto (dólares y bolívares)</option>
+                  </select>
+                </div>
+              </div>
+
+              <label class="check" style="margin-top:24px">
+                <input type="checkbox" id="aceptaTerminos">
+                <span class="check-mark" id="ckTerminos"></span>
+                <span>Confirmo que los datos, las tallas y las cantidades son correctos. Entiendo que las piezas se producen con mi diseño después de aprobar la prueba, y acepto los términos de compra y el tratamiento de mis datos.</span>
+              </label>
+              <span class="field-error" id="errTerminos" style="margin-top:6px">Debes aceptar los términos para continuar.</span>
+
+              <div class="step-nav">
+                <button class="btn btn-ghost" type="button" data-prev="2">Volver</button>
+                <button class="btn btn-primary btn-lg" type="button" id="btnConfirmar">Confirmar pedido</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ PASO 4: CONFIRMACIÓN ============ -->
+          <section class="checkout-step" data-panel="4">
+            <div class="panel" id="panelConfirmacion"></div>
+          </section>
+
+        </div>
+
+        <!-- ============ RESUMEN ============ -->
+        <aside class="summary" id="resumen"></aside>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="app-footer"></div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/mockup.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+  const A = window.STAMPY;
+  const CFG = A.config;
+  A.basePath = "";
+  await A.init("catalogo");
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+  /* ---------- Carrito vacío ---------- */
+  if (!A.cart.items().length) {
+    $("#vacio").classList.remove("hidden");
+    $("#vacioIcon").innerHTML = A.icon("cart", "", 46);
+    return;
+  }
+  $("#checkout").classList.remove("hidden");
+
+  /* ================= Estado del checkout ================= */
+  const S = {
+    paso: 1,
+    modo: "delivery",
+    zonaId: CFG.zonas[0].id,
+    tiendaId: CFG.tiendas[0].id,
+    metodo: "pago-movil",
+  };
+
+  /* ================= Iconos estáticos ================= */
+  $("#iconDelivery").innerHTML = A.icon("truck");
+  $("#iconTienda").innerHTML = A.icon("store");
+  $("#ckFactura").innerHTML = A.icon("check");
+  $("#ckTerminos").innerHTML = A.icon("check");
+  $("#avisoPrivacidad").innerHTML = A.icon("lock") + (A.modoServidor
+    ? "<span>Usamos tus datos solo para este pedido: la factura, la prueba de diseño y la entrega. No los compartimos con nadie.</span>"
+    : "<span>Modo demostración: tus datos se guardan solo en este navegador para generar el pedido y el seguimiento.</span>");
+  $("#avisoPM").innerHTML = A.icon("info") +
+    "<span>Verificamos los pagos móviles de lunes a sábado entre 8:00 am y 7:00 pm. Si pagas fuera de ese horario, la confirmación entra al siguiente día hábil.</span>";
+  $("#avisoTienda").innerHTML = A.icon("info") +
+    "<span>Te avisamos por WhatsApp cuando tu pedido esté listo. Lleva tu cédula y el número de pedido.</span>";
+  $("#avisoEfectivo").innerHTML = A.icon("store") +
+    "<span>Pagas en el taller al retirar. Como producimos con tu diseño, empezamos cuando apruebes la prueba y te confirmemos el pedido por WhatsApp.</span>";
+
+  /* ================= Zonas y tiendas ================= */
+  $("#zona").innerHTML = CFG.zonas
+    .map((z) => `<option value="${z.id}">${z.nombre} — ${A.fmtUSD(z.costo)} · ${z.dias} ${z.dias === 1 ? "día hábil" : "días hábiles"}</option>`)
+    .join("");
+
+  $("#tiendasOpts").innerHTML = CFG.tiendas
+    .map(
+      (t, i) => `
+    <label class="opt">
+      <input type="radio" name="tienda" value="${t.id}"${i === 0 ? " checked" : ""}>
+      <span class="opt-mark"></span>
+      <span class="opt-body">
+        <strong>${t.nombre}</strong>
+        <span>${t.direccion}<br>${t.horario} · ${t.telefono}</span>
+      </span>
+      <span class="opt-price">Sin costo</span>
+    </label>`
+    )
+    .join("");
+
+  /* ================= Métodos de pago ================= */
+  function pintarMetodos() {
+    const metodos = [
+      { id: "pago-movil", ic: "phone", t: "Pago móvil", d: "Desde tu banco a nuestro pago móvil. Lo verificamos y te confirmamos por WhatsApp.", tag: "−5 %" },
+      { id: "transferencia", ic: "card", t: "Transferencia bancaria", d: "A nuestra cuenta " + String(CFG.transferencia.tipo || "").toLowerCase() + (CFG.transferencia.banco && !/^\[/.test(CFG.transferencia.banco) ? " en " + CFG.transferencia.banco : "") + ".", tag: "−5 %" },
+      { id: "zelle", ic: "mail", t: "Zelle", d: "Pago en dólares desde una cuenta en Estados Unidos.", tag: "" },
+      { id: "binance", ic: "coin", t: "Binance (USDT)", d: "Transfiere USDT a nuestro ID de Binance Pay.", tag: "" },
+      { id: "paypal", ic: "globe", t: "PayPal", d: "Pago en dólares desde tu cuenta de PayPal.", tag: "" },
+      { id: "banesco-panama", ic: "bank", t: "Banesco Panamá", d: "Transferencia internacional a cuenta en Panamá.", tag: "" },
+    ];
+    if (S.modo === "tienda") {
+      metodos.push({ id: "efectivo", ic: "store", t: "Efectivo al retirar", d: "Pagas en el taller cuando pases a buscar tu pedido.", tag: "" });
+    } else if (S.metodo === "efectivo") {
+      S.metodo = "pago-movil";
+    }
+
+    $("#metodosPago").innerHTML = metodos
+      .map(
+        (m) => `
+      <label class="opt">
+        <input type="radio" name="metodoPago" value="${m.id}"${m.id === S.metodo ? " checked" : ""}>
+        <span class="opt-mark"></span>
+        <span class="opt-body"><strong>${m.t}</strong><span>${m.d}</span></span>
+        ${m.tag ? `<span class="opt-price">${m.tag}</span>` : ""}
+        <span class="opt-icon">${A.icon(m.ic)}</span>
+      </label>`
+      )
+      .join("");
+  }
+
+  /* ================= Datos bancarios ================= */
+  const filaBanco = (label, valor, copiar) => `
+    <div class="bank-row">
+      <dt>${label}</dt>
+      <dd>${A.escape(valor)}${copiar ? `<button class="copy-btn" type="button" onclick="STAMPY.copiar('${String(valor).replace(/'/g, "")}', this)" aria-label="Copiar">${A.icon("copy", "", 14)}</button>` : ""}</dd>
+    </div>`;
+
+  $("#datosPagoMovil").innerHTML =
+    filaBanco("Banco", CFG.pagoMovil.banco, false) +
+    filaBanco("Teléfono", CFG.pagoMovil.telefono, true) +
+    filaBanco("RIF", CFG.pagoMovil.rif, true) +
+    filaBanco("Titular", CFG.pagoMovil.titular, false);
+
+  $("#datosTransferencia").innerHTML =
+    filaBanco("Banco", CFG.transferencia.banco, false) +
+    filaBanco("N.º de cuenta", CFG.transferencia.cuenta, true) +
+    filaBanco("Tipo", CFG.transferencia.tipo, false) +
+    filaBanco("Titular", CFG.transferencia.titular, false) +
+    filaBanco("RIF", CFG.transferencia.rif, true);
+
+  $("#datosZelle").innerHTML =
+    filaBanco("Correo", CFG.zelle.email, true) +
+    filaBanco("Titular", CFG.zelle.titular, false);
+
+  $("#datosBinance").innerHTML =
+    filaBanco("Binance ID", CFG.binance.id, true) +
+    filaBanco("Alias", CFG.binance.alias, false);
+
+  $("#datosPaypal").innerHTML =
+    filaBanco("Correo", CFG.paypal.email, true) +
+    filaBanco("Titular", CFG.paypal.titular, false) +
+    (CFG.paypal.nota ? `<div class="bank-row"><dd class="tiny muted" style="grid-column:1/-1">${A.escape(CFG.paypal.nota)}</dd></div>` : "");
+
+  $("#datosBanescoPanama").innerHTML =
+    filaBanco("Banco", CFG.banescoPanama.banco, false) +
+    filaBanco("N.º de cuenta", CFG.banescoPanama.cuenta, true) +
+    filaBanco("Tipo", CFG.banescoPanama.tipo, false) +
+    filaBanco("Titular", CFG.banescoPanama.titular, false);
+
+  const opcionesBanco = CFG.bancos.map((b) => `<option>${b}</option>`).join("");
+  $("#pmBanco").innerHTML = opcionesBanco;
+  $("#tfBanco").innerHTML = opcionesBanco;
+
+  const hoy = new Date().toISOString().slice(0, 10);
+  $("#pmFecha").value = hoy; $("#pmFecha").max = hoy;
+  $("#tfFecha").value = hoy; $("#tfFecha").max = hoy;
+
+  /* ================= Resumen lateral ================= */
+  function totales() {
+    return A.calcTotales(A.cart.subtotal(), { modo: S.modo, zonaId: S.zonaId }, S.metodo);
+  }
+
+  function pintarResumen() {
+    const t = totales();
+    const lineas = A.cart.detailed();
+    const zona = CFG.zonas.find((z) => z.id === S.zonaId);
+    const tienda = CFG.tiendas.find((x) => x.id === S.tiendaId);
+
+    const entrega = { modo: S.modo, zonaId: S.zonaId };
+    const dias = A.diasEntrega(A.cart.items(), entrega);
+    const diasProd = A.diasEntrega(A.cart.items(), { modo: "tienda" });
+
+    $("#resumen").innerHTML = `
+      <h3>Resumen del pedido</h3>
+      <div class="summary-items">
+        ${lineas.map((l) => `
+          <div class="summary-item">
+            <span class="summary-thumb"><img src="${A.img((l.producto.imagenes || [])[0])}" alt=""></span>
+            <div class="grow">
+              <h5>${A.escape(l.producto.nombre)}</h5>
+              <p>${l.qty} × ${A.fmtUSD(l.precio)}${l.mayor ? ` <span class="badge badge-yellow" style="padding:1px 7px">Al mayor</span>` : ""}</p>
+              <div class="cart-meta">${A.lineaMetaHTML(l)}</div>
+              ${A.disenoHTML(l.diseno)}
+            </div>
+            <span class="amt">${A.fmtUSD(l.subtotal)}</span>
+          </div>`).join("")}
+      </div>
+      ${A.avisoMinimoHTML() ? `<div style="margin-bottom:14px">${A.avisoMinimoHTML()}</div>` : ""}
+
+      <hr class="divider" style="margin-bottom:14px">
+
+      <div class="totals">
+        <div class="total-row"><span>Subtotal</span><span>${A.fmtUSD(t.subtotal)}</span></div>
+        ${S.modo === "delivery" ? `<div class="total-row">
+          <span>Envío · ${zona ? zona.nombre.split("(")[0].trim() : ""}</span>
+          <span>${t.envioGratis ? '<span style="color:var(--green-700);font-weight:700">Gratis</span>' : t.envio === 0 ? "Sin costo" : A.fmtUSD(t.envio)}</span>
+        </div>` : ""}
+        <div class="total-row"><span>IVA (16 %)</span><span>${A.fmtUSD(t.iva)}</span></div>
+        ${t.descuento > 0 ? `<div class="total-row" style="color:var(--green-700)"><span>Descuento pago en Bs (5 %)</span><span>−${A.fmtUSD(t.descuento)}</span></div>` : ""}
+        <div class="total-row is-grand"><span>Total</span><span>${A.fmtUSD(t.total)}</span></div>
+        <div class="total-row" style="justify-content:flex-end"><span class="tiny">${A.fmtBsRaw(t.totalBs)}</span></div>
+      </div>
+
+      <div class="notice notice-blue" style="margin-top:4px">
+        ${S.modo === "delivery"
+          ? A.icon("truck") + `<span>Llega en unos <strong>${A.diasTxt(dias)}</strong> después de aprobar el diseño${diasProd ? ` (${diasProd} de producción + ${dias - diasProd} de envío)` : ""}.</span>`
+          : A.icon("store") + `<span>Listo para retirar en <strong>${tienda ? A.escape(tienda.nombre) : "el taller"}</strong> ${diasProd ? `en unos <strong>${A.diasTxt(diasProd)}</strong> después de aprobar el diseño` : "apenas confirmemos tu pago"}.</span>`}
+      </div>
+
+      <div class="tiny muted" style="margin-top:14px;text-align:center">
+        Tasa referencial: 1 USD = ${CFG.bcvRate.toLocaleString("es-VE", { minimumFractionDigits: 2 })} Bs
+      </div>`;
+
+    $("#montoBs").textContent = A.fmtBsRaw(t.totalBs);
+    $("#montoUsd").textContent = "equivalente a " + A.fmtUSD(t.total);
+  }
+
+  /* ================= Navegación entre pasos ================= */
+  function irA(n) {
+    S.paso = n;
+    $$(".checkout-step").forEach((s) => s.classList.toggle("is-active", +s.dataset.panel === n));
+    $$("#steps .step").forEach((s) => {
+      const i = +s.dataset.step;
+      s.classList.toggle("is-active", i === n);
+      s.classList.toggle("is-done", i < n);
+    });
+    $$("#steps .step-line").forEach((l, i) => l.classList.toggle("is-done", i < n - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  $$("[data-next]").forEach((b) => (b.onclick = () => {
+    const destino = +b.dataset.next;
+    if (validarPaso(S.paso)) irA(destino);
+  }));
+  $$("[data-prev]").forEach((b) => (b.onclick = () => irA(+b.dataset.prev)));
+
+  /* ================= Validaciones ================= */
+  function chequear(sel, fn, msg) {
+    const el = $(sel);
+    const ok = fn(el.value);
+    A.marcarError(el, !ok);
+    if (!ok && msg) el.parentElement.querySelector(".field-error").textContent = msg;
+    return ok;
+  }
+
+  /* Productos bajo su pedido mínimo: no se puede avanzar ni confirmar */
+  function bloqueoMinimo() {
+    const aviso = A.avisoMinimoHTML();
+    const box = $("#avisoMinimo");
+    box.innerHTML = aviso ? aviso.replace("</span></div>", ` <a href="#" onclick="STAMPY.openCart();return false" style="text-decoration:underline;font-weight:700">Ajustar en el carrito</a></span></div>`) : "";
+    box.classList.toggle("hidden", !aviso);
+    $$("[data-next], #btnConfirmar").forEach((b) => (b.disabled = !!aviso));
+    return !!aviso;
+  }
+
+  function validarPaso(n) {
+    if (bloqueoMinimo()) { A.toast("Completa el pedido mínimo antes de seguir", "alert"); return false; }
+    let ok = true;
+    if (n === 1) {
+      ok = chequear("#nombre", (v) => A.validar.minLen(v, 5)) && ok;
+      ok = chequear("#cedula", A.validar.cedula) && ok;
+      ok = chequear("#telefono", A.validar.telefono) && ok;
+      ok = chequear("#email", A.validar.email) && ok;
+      if (!ok) A.toast("Revisa los campos marcados en rojo", "alert");
+    }
+    if (n === 2) {
+      if (S.modo === "delivery") {
+        ok = chequear("#direccion", (v) => A.validar.minLen(v, 12)) && ok;
+        ok = chequear("#ciudad", (v) => A.validar.minLen(v, 3)) && ok;
+        if (!ok) A.toast("Completa la dirección de entrega", "alert");
+      }
+    }
+    return ok;
+  }
+
+  function validarPago() {
+    let ok = true;
+    if (S.metodo === "pago-movil") {
+      ok = chequear("#pmTelefono", A.validar.telefono) && ok;
+      ok = chequear("#pmCedula", A.validar.cedula) && ok;
+      ok = chequear("#pmReferencia", A.validar.referencia) && ok;
+      ok = chequear("#pmFecha", A.validar.requerido) && ok;
+    } else if (S.metodo === "transferencia") {
+      ok = chequear("#tfReferencia", A.validar.referencia) && ok;
+      ok = chequear("#tfFecha", A.validar.requerido) && ok;
+      ok = chequear("#tfTitular", (v) => A.validar.minLen(v, 5)) && ok;
+    } else if (S.metodo === "zelle") {
+      ok = chequear("#zlTitular", (v) => A.validar.minLen(v, 5)) && ok;
+      ok = chequear("#zlEmail", A.validar.email) && ok;
+      ok = chequear("#zlConfirmacion", (v) => A.validar.minLen(v, 4)) && ok;
+    } else if (S.metodo === "binance") {
+      ok = chequear("#bnUsuario", (v) => A.validar.minLen(v, 3)) && ok;
+      ok = chequear("#bnConfirmacion", (v) => A.validar.minLen(v, 4)) && ok;
+    } else if (S.metodo === "paypal") {
+      ok = chequear("#ppEmail", A.validar.email) && ok;
+      ok = chequear("#ppConfirmacion", (v) => A.validar.minLen(v, 4)) && ok;
+    } else if (S.metodo === "banesco-panama") {
+      ok = chequear("#bpTitular", (v) => A.validar.minLen(v, 5)) && ok;
+      ok = chequear("#bpReferencia", (v) => A.validar.minLen(v, 4)) && ok;
+    }
+    const terminos = $("#aceptaTerminos").checked;
+    $("#errTerminos").classList.toggle("is-shown", !terminos);
+    if (!terminos) ok = false;
+    if (!ok) A.toast("Faltan datos para procesar el pago", "alert");
+    return ok;
+  }
+
+  /* ================= Interacciones ================= */
+  $("#facturaEmpresa").addEventListener("change", (e) => {
+    $("#datosEmpresa").classList.toggle("hidden", !e.target.checked);
+  });
+
+  $("#modoEntrega").addEventListener("change", (e) => {
+    if (e.target.name !== "modoEntrega") return;
+    S.modo = e.target.value;
+    $("#bloqueDelivery").classList.toggle("hidden", S.modo !== "delivery");
+    $("#bloqueTienda").classList.toggle("hidden", S.modo !== "tienda");
+    pintarMetodos();
+    mostrarBloquePago();
+    pintarResumen();
+  });
+
+  $("#zona").addEventListener("change", (e) => {
+    S.zonaId = e.target.value;
+    const z = CFG.zonas.find((x) => x.id === S.zonaId);
+    $("#hintZona").textContent = z
+      ? `Envío ${A.fmtUSD(z.costo)} · ${A.diasTxt(z.dias)} de viaje, que se suman a la producción. Gratis desde ${A.fmtUSD(CFG.freeShippingOver)}.`
+      : "";
+    pintarResumen();
+  });
+
+  $("#tiendasOpts").addEventListener("change", (e) => {
+    if (e.target.name !== "tienda") return;
+    S.tiendaId = e.target.value;
+    pintarResumen();
+  });
+
+  $("#metodosPago").addEventListener("change", (e) => {
+    if (e.target.name !== "metodoPago") return;
+    S.metodo = e.target.value;
+    mostrarBloquePago();
+    pintarResumen();
+  });
+
+  function mostrarBloquePago() {
+    $("#bloquePagoMovil").classList.toggle("hidden", S.metodo !== "pago-movil");
+    $("#bloqueTransferencia").classList.toggle("hidden", S.metodo !== "transferencia");
+    $("#bloqueZelle").classList.toggle("hidden", S.metodo !== "zelle");
+    $("#bloqueBinance").classList.toggle("hidden", S.metodo !== "binance");
+    $("#bloquePaypal").classList.toggle("hidden", S.metodo !== "paypal");
+    $("#bloqueBanescoPanama").classList.toggle("hidden", S.metodo !== "banesco-panama");
+    $("#bloqueEfectivo").classList.toggle("hidden", S.metodo !== "efectivo");
+  }
+
+  $("#aceptaTerminos").addEventListener("change", (e) => {
+    if (e.target.checked) $("#errTerminos").classList.remove("is-shown");
+  });
+
+  /* ================= Confirmar pedido ================= */
+  $("#btnConfirmar").onclick = async function () {
+    if (bloqueoMinimo()) { A.toast("Completa el pedido mínimo antes de confirmar", "alert"); return; }
+    if (!validarPago()) return;
+
+    const btn = this;
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = "Procesando…";
+
+    try {
+      const t = totales();
+      const zona = CFG.zonas.find((z) => z.id === S.zonaId);
+      const tienda = CFG.tiendas.find((x) => x.id === S.tiendaId);
+
+      const entrega =
+        S.modo === "delivery"
+          ? {
+              modo: "delivery",
+              zonaId: S.zonaId,
+              zonaNombre: zona.nombre,
+              direccion: $("#direccion").value.trim(),
+              ciudad: $("#ciudad").value.trim(),
+              referencia: $("#referencia").value.trim(),
+              nota: $("#notaEntrega").value.trim(),
+            }
+          : {
+              modo: "tienda",
+              tiendaId: S.tiendaId,
+              tiendaNombre: tienda.nombre,
+              direccion: tienda.direccion,
+              horario: tienda.horario,
+              retiraOtro: $("#retiraOtro").value.trim(),
+            };
+
+      let pago = { metodo: S.metodo, montoBs: t.totalBs };
+      if (S.metodo === "pago-movil") {
+        Object.assign(pago, {
+          banco: $("#pmBanco").value,
+          telefono: $("#pmTelefono").value.trim(),
+          cedula: $("#pmCedula").value.trim(),
+          referencia: $("#pmReferencia").value.trim(),
+          fecha: $("#pmFecha").value,
+          comprobante: $("#pmComprobante").files.length ? $("#pmComprobante").files[0].name : null,
+        });
+      } else if (S.metodo === "transferencia") {
+        Object.assign(pago, {
+          banco: $("#tfBanco").value,
+          referencia: $("#tfReferencia").value.trim(),
+          fecha: $("#tfFecha").value,
+          titular: $("#tfTitular").value.trim(),
+        });
+      } else if (S.metodo === "zelle") {
+        Object.assign(pago, {
+          titular: $("#zlTitular").value.trim(),
+          email: $("#zlEmail").value.trim(),
+          referencia: $("#zlConfirmacion").value.trim(),
+        });
+      } else if (S.metodo === "binance") {
+        Object.assign(pago, {
+          usuario: $("#bnUsuario").value.trim(),
+          referencia: $("#bnConfirmacion").value.trim(),
+        });
+      } else if (S.metodo === "paypal") {
+        Object.assign(pago, {
+          email: $("#ppEmail").value.trim(),
+          referencia: $("#ppConfirmacion").value.trim(),
+        });
+      } else if (S.metodo === "banesco-panama") {
+        Object.assign(pago, {
+          titular: $("#bpTitular").value.trim(),
+          referencia: $("#bpReferencia").value.trim(),
+        });
+      } else {
+        Object.assign(pago, { moneda: $("#efMoneda").value, pendiente: true });
+      }
+
+      const orden = await A.orders.crear({
+        items: A.cart.lineasPedido(),
+        cliente: {
+          nombre: $("#nombre").value.trim(),
+          cedula: $("#cedula").value.trim(),
+          telefono: $("#telefono").value.trim(),
+          email: $("#email").value.trim(),
+          empresa: $("#facturaEmpresa").checked
+            ? { razonSocial: $("#razonSocial").value.trim(), rif: $("#rifEmpresa").value.trim() }
+            : null,
+        },
+        entrega,
+        pago,
+        totales: t,
+      });
+
+      // El pago queda reportado; el equipo lo verifica desde el panel interno.
+      const avisoViejo = $("#avisoErrorPedido");
+      if (avisoViejo) avisoViejo.remove();
+      A.recordarPedido(orden.codigo);
+      S.paso = 4; // antes de vaciar el carrito, para que el listener no recargue
+      A.cart.clear();
+      pintarConfirmacion(orden);
+      irA(4);
+      $("#resumen").classList.add("hidden");
+    } catch (e) {
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal;
+      const faltantes = e.datos && e.datos.faltantes;
+      A.toast(
+        faltantes
+          ? "Se agotó el inventario de: " + faltantes.join(", ")
+          : "No pudimos registrar el pedido: " + e.message,
+        "alert"
+      );
+      const aviso = document.createElement("div");
+      aviso.className = "notice notice-red";
+      aviso.style.marginTop = "16px";
+      aviso.innerHTML =
+        A.icon("alert") +
+        `<span>${faltantes
+          ? "Mientras completabas la compra se agotó: <strong>" + A.escape(faltantes.join(", ")) + "</strong>. Ajusta el carrito e inténtalo de nuevo."
+          : e.datos && (e.datos.problemas || e.datos.bajoMinimo)
+            ? A.escape(e.message) + " Ajusta el carrito e inténtalo de nuevo."
+            : "No pudimos registrar el pedido. Revisa tu conexión e inténtalo otra vez, o escríbenos al " + A.escape(CFG.contact.phone) + "."}</span>`;
+      const anterior = $("#avisoErrorPedido");
+      if (anterior) anterior.remove();
+      aviso.id = "avisoErrorPedido";
+      btn.parentElement.parentElement.appendChild(aviso);
+    }
+  };
+
+  /* ================= Pantalla de confirmación ================= */
+  function pintarConfirmacion(o) {
+    const eta = new Date(o.eta);
+    const esTienda = o.entrega.modo === "tienda";
+    const metodoLabel = {
+      "pago-movil": "Pago móvil",
+      transferencia: "Transferencia bancaria",
+      zelle: "Zelle",
+      binance: "Binance (USDT)",
+      paypal: "PayPal",
+      "banesco-panama": "Banesco Panamá",
+      efectivo: "Efectivo al retirar",
+    }[o.pago.metodo];
+
+    $("#panelConfirmacion").innerHTML = `
+      <div class="confirm-hero">
+        <div class="confirm-icon">${A.icon("check", "", 40)}</div>
+        <h2>¡Pedido registrado!</h2>
+        <p class="lead" style="margin-top:8px;max-width:52ch;margin-inline:auto">
+          ${o.pago.metodo === "efectivo"
+            ? "Te escribimos por WhatsApp para confirmar el pedido y la prueba de diseño. Pagas en el taller al retirarlo."
+            : "Recibimos tu reporte de pago. Lo verificamos contra el estado de cuenta y te confirmamos por WhatsApp."}
+        </p>
+        <div class="order-code">
+          <div style="text-align:left">
+            <span class="tiny muted" style="display:block">Número de pedido</span>
+            <strong class="mono">${o.codigo}</strong>
+          </div>
+          <button class="copy-btn" type="button" onclick="STAMPY.copiar('${o.codigo}', this)" aria-label="Copiar número">${A.icon("copy", "", 16)}</button>
+        </div>
+        <p class="tiny muted" style="margin-top:10px">Guarda este número: con él sigues tu pedido paso a paso.</p>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-cell"><dt>Cliente</dt><dd>${A.escape(o.cliente.nombre)}<br><span class="small muted">${A.escape(o.cliente.cedula)}</span></dd></div>
+        <div class="info-cell"><dt>${esTienda ? "Retiro en" : "Entrega en"}</dt><dd>${A.escape(esTienda ? o.entrega.tiendaNombre : o.entrega.direccion)}</dd></div>
+        <div class="info-cell"><dt>${esTienda ? "Listo aproximadamente" : "Entrega estimada"}</dt><dd>${A.fmtFecha(eta)}</dd></div>
+        <div class="info-cell"><dt>Método de pago</dt><dd>${metodoLabel}${o.pago.referencia ? `<br><span class="small muted mono">Ref. ${A.escape(o.pago.referencia)}</span>` : ""}</dd></div>
+        <div class="info-cell"><dt>Total pagado</dt><dd>${A.fmtUSD(o.totales.total)}<br><span class="small muted">${A.fmtBsRaw(o.totales.totalBs)}</span></dd></div>
+        ${o.guia ? `<div class="info-cell"><dt>${esTienda ? "Orden interna" : "Guía de envío"}</dt><dd class="mono">${o.guia}</dd></div>` : ""}
+      </div>
+
+      <div style="margin-top:24px">
+        <h3 style="font-size:1rem;margin-bottom:10px">Tu pedido</h3>
+        ${A.agruparLineas(o.items).map((g) => A.grupoHTML(g, false)).join("")}
+      </div>
+
+      <div class="notice notice-magenta" style="margin-top:22px">
+        ${A.icon("whatsapp")}
+        <span><strong>Lo que sigue:</strong> verificamos tu pago y te escribimos al <strong>${A.escape(o.cliente.telefono)}</strong> con la prueba de diseño. Empezamos a producir cuando la apruebes.${o.items.some((it) => it.diseno && it.diseno.archivo && !it.diseno.archivo.url) ? " Ten a mano tu archivo de diseño para enviárnoslo por ahí." : ""}</span>
+      </div>
+      <div class="notice notice-blue" style="margin-top:10px">
+        ${A.icon("mail")}
+        <span>También te enviamos el resumen a <strong>${A.escape(o.cliente.email)}</strong>. Si no lo ves, revisa la carpeta de spam.</span>
+      </div>
+
+      <div class="step-nav" style="margin-top:26px">
+        <a class="btn btn-ghost" href="index.html#catalogo">Seguir comprando</a>
+        <div class="row" style="gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" type="button" onclick="window.print()">${A.icon("print")} Imprimir</button>
+          <a class="btn btn-dark btn-lg" href="seguimiento.html?codigo=${o.codigo}">${A.icon("pin")} Seguir mi pedido</a>
+        </div>
+      </div>`;
+  }
+
+  /* ================= Arranque ================= */
+  pintarMetodos();
+  mostrarBloquePago();
+  $("#zona").dispatchEvent(new Event("change"));
+  const prodDias = A.diasEntrega(A.cart.items(), { modo: "tienda" });
+  if (prodDias) {
+    $("#descDelivery").textContent = `Te lo llevamos a la puerta: ${A.diasTxt(prodDias)} de producción más el envío a tu zona.`;
+    $("#descTienda").textContent = `Sin costo. Listo en unos ${A.diasTxt(prodDias)}; te avisamos por WhatsApp.`;
+  }
+  pintarResumen();
+  bloqueoMinimo();
+  document.addEventListener("stampy:cart", () => {
+    if (S.paso === 4) return;
+    if (!A.cart.items().length) { location.reload(); return; }
+    pintarResumen();
+    bloqueoMinimo();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Página no encontrada — Estampy</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/img/estampy-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+<main class="nf">
+  <span class="nf-blob" aria-hidden="true"></span>
+  <span class="spark deco-spark deco-spark--a" aria-hidden="true"></span>
+  <span class="spark deco-spark deco-spark--b" aria-hidden="true"></span>
+  <span class="spark deco-spark deco-spark--c" aria-hidden="true"></span>
+  <div class="nf-card">
+    <a class="logo" href="/" aria-label="Estampy — inicio">
+      <img src="/assets/img/estampy-logo.png" alt="Estampy" width="560" height="463">
+    </a>
+
+    <span class="eyebrow">Error 404</span>
+    <h1>Esta página se quedó sin imprimir</h1>
+    <p class="lead">El enlace puede estar mal escrito o la página ya no existe. Pero tu diseño todavía puede quedar a todo color:</p>
+
+    <div class="row" style="justify-content:center;gap:12px;margin-top:28px;flex-wrap:wrap">
+      <a class="btn btn-dark btn-lg" href="/index.html#catalogo">Ver el catálogo</a>
+      <a class="btn btn-ghost btn-lg" href="/seguimiento.html">Seguir mi pedido</a>
+    </div>
+
+    <div class="row" id="contacto404" style="justify-content:center;gap:18px;margin-top:30px;flex-wrap:wrap;font-size:.92rem"></div>
+  </div>
+</main>
+
+<script src="/assets/js/data.js"></script>
+<script>
+(function () {
+  var cfg = (window.STAMPY && STAMPY.config) || {};
+  // Si el panel cambió la configuración en este navegador, se usa esa
+  try {
+    var guardada = JSON.parse(localStorage.getItem("stampy.config.v1") || "null");
+    if (guardada && guardada.contact) cfg = guardada;
+  } catch (e) { /* sin almacenamiento */ }
+  var c = cfg.contact || {};
+  var links = [];
+  var ig = String(c.instagram || "").replace(/^@/, "").trim();
+  if (ig) links.push('<a class="link-arrow" href="https://www.instagram.com/' + encodeURIComponent(ig) + '/" target="_blank" rel="noopener">Instagram @' + ig.replace(/[<>&"]/g, "") + "</a>");
+  var wa = String(c.whatsapp || "").replace(/\D/g, "");
+  if (wa) {
+    if (wa.charAt(0) === "0" && wa.length === 11) wa = "58" + wa.slice(1);
+    links.push('<a class="link-arrow" href="https://wa.me/' + wa + '" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>');
+  }
+  document.getElementById("contacto404").innerHTML = links.join("");
+})();
+</script>
+</body>
+</html>
